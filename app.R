@@ -27,7 +27,8 @@ ui <- fluidPage(
                                 column(width = 4, 
                                        checkboxGroupInput(inputId = "historicalDurationA", 
                                                           label = NULL, 
-                                                          choices = c("1-Month" = "X1.Mo", "6-Month" = "X6.Mo")
+                                                          choices = c("1-Month" = "X1.Mo", "6-Month" = "X6.Mo"),
+                                                          selected = "X1.Mo"
                                        )
                                 ),
                                 column(width = 4, 
@@ -119,9 +120,10 @@ server <- function(input, output) {
         #get treasury time range
         treasury <- treasury_time(input$historicalYear[1], input$historicalYear[2])
         #select duration of interest
-        treasury_select <- treasury %>% select(Date, X1.Mo, X6.Mo, X1.Yr, X5.Yr, X10.Yr, X20.Yr, X30.Yr) 
-        treasury_select <- data.frame(Date = treasury_select$Date, 
-                                      mutate_all(treasury_select[,-1], function(x) as.numeric(as.character(x))))
+        treasury_select <- treasury %>% select(Date, dur_selected()) 
+        
+        treasury_select <- mutate_all(treasury_select, function(x) as.numeric(as.character(x)))
+        treasury_select$Date <- treasury$Date
         #convert wide to long 
         treasury_long <- melt(treasury_select, id.vars = c("Date"))
         #get start of month treasury rates
