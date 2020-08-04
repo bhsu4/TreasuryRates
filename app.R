@@ -6,6 +6,10 @@ library(tidyr)
 library(shinycssloaders)
 library(shinythemes)
 library(lubridate)
+library(plotly)
+library(shinycssloaders)
+library(reshape2)
+library(RColorBrewer)
 
 
 # Define UI
@@ -43,39 +47,74 @@ ui <- fluidPage(
                                                           choices = c("10-Year" = "X10.Yr", "30-Year" = "X30.Yr")
                                        )
                                 )
-                            ), hr(), textOutput("poop"),
+                            ), hr(),
                             sliderInput(inputId = "historicalYear",
                                         label = "Select Years",
                                         min = 2010, max = 2020,
                                         value = c(2010,2020)),
                             helpText(HTML("<p style = 'text-align: right'>Last update: 6/30/2020</p>")),
-                            hr())
+                            hr(), 
+                            textOutput("poop2"))
                        )
                 ),
                 mainPanel(
                     fluidRow(
                         column(width = 12, 
-                            withSpinner(plotlyOutput(outputId = "historicalLP", height = 500))
+                            withSpinner(plotlyOutput(outputId = "historicalLP", height = 400))
+                        ), hr(),
+                        column(width = 12, 
+                            withSpinner(plotlyOutput(outputId = "percentileLP", height = 500))
                         )
-                    ), hr(),
-                    fluidRow(
-                        column(width = 12,
-                            wellPanel(fluidRow(align = "center", 
-                                column(width = 3, 
-                                    numericInput("input1", "Input Rate", value = 2)
+                    ), hr()
+                )
+            )
+        ),
+        tabPanel(HTML("Percentile of Treasury Yields"), fluid = TRUE, icon = icon("percent"),
+            fluidRow(
+                column(width = 12,
+                     fluidRow(tags$label("Input Treasury Rate for Selected Duration(s)"),
+                          wellPanel(fluidRow(
+                                column(width = 12, 
+                                     column(width = 8, 
+                                            sliderInput("percentileTime", "Select Time Interval", min = 2010, max = 2020, 
+                                                        value = c(2010, 2020), step = 1), 
+                                     column(width = 4, 
+                                            helpText("Last Update: 6/30/2020")))
                                 ),
-                                column(width = 3, 
-                                    numericInput("input2", "Input Rate", value = 3)
-                                ),
-                                column(width = 3, 
-                                    numericInput("input3", "Input Rate", value = 0)
-                                ),
-                                column(width = 3, 
-                                    numericInput("input4", "Input Rate", value = 2.5)
+                                column(width = 12, 
+                                     column(width = 2, numericInput("inputPercentile1", label = "1-Month", value = 0)), 
+                                     column(width = 2, numericInput("inputPercentile2", label = "6-Month", value = 0)), 
+                                     column(width = 2, numericInput("inputPercentile3", label = "1-Year", value = 0)), 
+                                     column(width = 2, numericInput("inputPercentile4", label = "5-Year", value = 0)), 
+                                     column(width = 2, numericInput("inputPercentile5", label = "10-Year", value = 0)), 
+                                     column(width = 2, numericInput("inputPercentile6", label = "30-Year", value = 0))
                                 )
-                            ))
-                        )
-                    ) 
+                            )
+                         )
+                     )
+                )
+            ), 
+            fluidRow(
+                mainPanel(
+                       fluidRow(
+                           column(width = 12, 
+                               column(width = 4, 
+                                      withSpinner(plotlyOutput("plotPercentile1", height = 400))), 
+                               column(width = 4, 
+                                      withSpinner(plotlyOutput("plotPercentile2", height = 400))), 
+                               column(width = 4, 
+                                      withSpinner(plotlyOutput("plotPercentile3", height = 400))),
+                           ),
+                           column(width = 12, 
+                              column(width = 4, 
+                                     withSpinner(plotlyOutput("plotPercentile4", height = 400))),
+                              column(width = 4, 
+                                     withSpinner(plotlyOutput("plotPercentile5", height = 400))), 
+                              column(width = 4, 
+                                     withSpinner(plotlyOutput("plotPercentile6", height = 400)))
+                           )
+                           
+                    )
                 )
             )
         ),
@@ -110,7 +149,7 @@ duration_names <- reactive({
                months = c(1, 2, 3, 6, 12, 24, 36, 60, 84, 120, 240, 360))
 })
 
-server <- function(input, output) {
+server <- function(session, input, output) {
     
     dur_selected <- reactive({
         x <- c(input$historicalDurationA, input$historicalDurationB, input$historicalDurationC)
@@ -134,6 +173,11 @@ server <- function(input, output) {
     })
     
     output$historicalLP <- renderPlotly({
+        
+        shiny::validate(
+            need(length(dur_selected()) >0, "Please Choose a Duration")
+        )
+        
         #get legend names 
         treasury_line <- merge(treasury_res()[[1]], duration_names(), by = "variable")
         treasury_point <- merge(treasury_res()[[2]], duration_names(), by = "variable")
@@ -175,21 +219,100 @@ server <- function(input, output) {
     
     ###start of percentile computation 
     
-    
-    
     treasury_pct <- reactive({
         #get treasury time range
         treasury <- treasury_time(input$historicalYear[1], input$historicalYear[2])
-        treasury_pct <- treasury %>% select(Date, c("X1.Mo", "X6.Mo", "X1.Yr", "X5.Yr"))
-        #convert wide to long 
+        treasury_pct <- treasury %>% select(Date, dur_selected())
+        #convert wide to long , drop nas
         treasury_long <- melt(treasury_pct, id.vars = c("Date"))
+        treasury_long <- treasury_long[!is.na(as.numeric(as.character(treasury_long$value))),]
         #percentile calculation
         treasury_long <- treasury_long %>% group_by(variable) %>% mutate(PCT = ntile(value, 100))
-        treasury_long <- treasury_long[order(treasury_long$Date),] #order to avoid line connectivity problems
+        treasury_long <- treasury_long %>% arrange(value, .by_group = TRUE) #order to avoid line connectivity problems
         return(treasury_long)
     })
     
+    output$percentileLP <- renderPlotly({
+        
+        shiny::validate(
+            need(length(dur_selected()) >0, "Please Choose a Duration")
+        )
+        
+        #get legend names 
+        treasury_long2 <- treasury_pct() %>% arrange(value, .by_group = TRUE) %>% mutate(count = seq(n()))
+        treasury_long2 <- cbind(treasury_long2, num = 1:nrow(treasury_long2))
+        #add vartitle from merging
+        treasury_long2 <- merge(treasury_long2, duration_names(), by = "variable")
+        #get treasury points
+        treasury_point <- treasury_long2 %>% filter(PCT %in% seq(0, 100, 1)) %>% group_by(vartitle, PCT) %>% 
+                                filter(value == max(value)) %>% distinct(PCT, .keep_all = TRUE)
+        #get treasury points 
+        treasury_labels <- treasury_point[treasury_point$PCT %in% c(1, seq(5, 100, 5)),]
+        treasury_labels <- treasury_labels %>% mutate(labels = PCT) 
+        treasury_labels[which(treasury_labels$PCT == 100), ]$labels <- ""
+        
+        #plotting
+        p <- plot_ly(type = 'scatter', mode = 'lines')
+        for (i in dur_selected()){
+            
+            #start plotting
+            p <- add_trace(p, data = treasury_long2[treasury_long2$variable == i,], 
+                           legendgroup = ~vartitle, x = ~num, y = ~value, 
+                           type = 'scatter', mode = 'lines', 
+                           color = ~vartitle, hoverinfo = 'none')
+            p <- add_trace(p, data = treasury_point[treasury_point$variable == i,], 
+                           legendgroup = ~vartitle, showlegend = F, 
+                           color = ~vartitle, mode = 'markers',               
+                           marker = list(symbol = "circle", size = 8), 
+                           x = ~num, y = ~value, 
+                           hoverinfo = 'text', 
+                           text = ~paste0('Percentile: ', PCT, '</br></br>', 
+                                          'Duration: ', vartitle, '</br>',
+                                          'Rate: ', value, "%"))
 
+        }
+        p %>% layout(title = "Treasury Rates at Select Durations",
+                     legend = list(orientation = "h", xanchor = "center", x = 0.5, font = list(size = 15)), 
+                     font = list(size = 12), 
+                     xaxis = list(title = "", showgrid = TRUE, #showticklabels = FALSE), 
+                                  tickvals = ~treasury_labels$num, ticktext = ~treasury_labels$labels, 
+                                  size = 8, tickangle = 0),
+                     yaxis = list(title = "Treasury Rates", size = 8, tickangle = 0))%>% 
+            config(displaylogo = FALSE, modeBarButtonsToRemove = list("zoomIn2d", "zoomOut2d", "zoom2d", "autoScale2d", "resetScale2d", "select2d", 
+                                                                      "hoverClosestCartesian", "hoverCompareCartesian", "lasso2d", "pan2d"))
+    })
+    
+    
+
+    output$poop <- renderText(percentileInputs())
+    
+    observe({
+        time1 <- input$percentileTime[1]
+        time2 <- input$percentileTime[2]
+        #update numeric inputs based on time year selected
+        updateNumericInput(session, "inputPercentile1", label = "1-Month", 
+                           min = min(as.numeric(treasury_time(time1, time2)$X1.Mo)), 
+                           max = max(as.numeric(treasury_time(time1, time2)$X1.Mo)))
+        updateNumericInput(session, "inputPercentile2", label = "6-Month", 
+                           min = min(as.numeric(treasury_time(time1, time2)$X6.Mo)), 
+                           max = max(as.numeric(treasury_time(time1, time2)$X6.Mo)))
+        updateNumericInput(session, "inputPercentile3", label = "1-Year", 
+                           min = min(as.numeric(treasury_time(time1, time2)$X1.Yr)), 
+                           max = max(as.numeric(treasury_time(time1, time2)$X1.Yr)))
+        updateNumericInput(session, "inputPercentile4", label = "5-Year", 
+                           min = min(as.numeric(treasury_time(time1, time2)$X5.Yr)), 
+                           max = max(as.numeric(treasury_time(time1, time2)$X5.Yr)))
+        updateNumericInput(session, "inputPercentile5", label = "10-Year", 
+                           min = min(as.numeric(treasury_time(time1, time2)$X10.Yr)), 
+                           max = max(as.numeric(treasury_time(time1, time2)$X10.Yr)))
+        updateNumericInput(session, "inputPercentile6", label = "30-Year", 
+                           min = min(as.numeric(treasury_time(time1, time2)$X30.Yr)), 
+                           max = max(as.numeric(treasury_time(time1, time2)$X30.Yr)))
+    })
+  
+    
+
+    
     
 }
 
