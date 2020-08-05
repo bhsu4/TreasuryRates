@@ -11,6 +11,30 @@ library(shinycssloaders)
 library(reshape2)
 library(RColorBrewer)
 
+#finding percentile of interests' treasury rates 
+find_seqpercentiles <- function(dat){
+  #quantile points
+  my_quantiles <- c(0.01, seq(0.05, 1, by = 0.05))
+  ind_q <- min(which(min(dat$percentile) <= my_quantiles))
+  quantile_focus <- my_quantiles[ind_q:length(my_quantiles)]
+  #order the data just in case
+  dat <- dat[order(dat$percentile),]
+  #calculate the rate
+  res_p <- c()
+  for(i in quantile_focus){
+    #finding percentile point
+    my_k <- max(which(i >= dat$percentile))
+    if(my_k == length(dat$percentile)){
+      res_p = c(res_p, dat[my_k,]$value)
+    }
+    else{
+      pdiff_total <- dat[my_k+1,]$percentile - dat[my_k,]$percentile
+      pdiff <- i - dat[my_k,]$percentile
+      res_p <- c(res_p, pdiff/pdiff_total*as.numeric(dat[my_k+1,]$value) + (1-pdiff/pdiff_total)*as.numeric(dat[my_k,]$value))
+    }
+  }
+  return(data.frame(perct = quantile_focus*100, rate = res_p))
+}
 
 # Define UI
 ui <- fluidPage(
@@ -305,7 +329,7 @@ server <- function(session, input, output) {
                           mode = 'markers', marker = list(symbol = 'square', size = 8, color = "#000000"), 
                           hoverinfo= 'text', text = ~paste0('Percentile: ', input$inputPercentile1, '</br></br>', 
                                                             'Duration: 1-Month', '</br>',
-                                                            'Rate: ', res, "%"))
+                                                            'Rate: ', res_p, "%"))
         
         p %>% layout(title = "1-Month Treasury Rates",
                      legend = list(orientation = "h", xanchor = "center", x = 0.5, font = list(size = 15)), 
@@ -349,7 +373,7 @@ server <- function(session, input, output) {
                   mode = 'markers', marker = list(symbol = 'square', size = 8, color = "#000000"), 
                   hoverinfo= 'text', text = ~paste0('Percentile: ', input$inputPercentile2, '</br></br>', 
                                                     'Duration: 6-Month', '</br>',
-                                                    'Rate: ', res, "%"))
+                                                    'Rate: ', res_p, "%"))
       p %>% layout(title = "6-Month Treasury Rates",
                    legend = list(orientation = "h", xanchor = "center", x = 0.5, font = list(size = 15)), 
                    font = list(size = 12), 
@@ -392,7 +416,7 @@ server <- function(session, input, output) {
                   mode = 'markers', marker = list(symbol = 'square', size = 8, color = "#000000"), 
                   hoverinfo= 'text', text = ~paste0('Percentile: ', input$inputPercentile3, '</br></br>', 
                                                     'Duration: 1-Year', '</br>',
-                                                    'Rate: ', res, "%"))
+                                                    'Rate: ', res_p, "%"))
       p %>% layout(title = "1-Year Treasury Rates",
                    legend = list(orientation = "h", xanchor = "center", x = 0.5, font = list(size = 15)), 
                    font = list(size = 12), 
@@ -435,7 +459,7 @@ server <- function(session, input, output) {
                   mode = 'markers', marker = list(symbol = 'square', size = 8, color = "#000000"), 
                   hoverinfo= 'text', text = ~paste0('Percentile: ', input$inputPercentile4, '</br></br>', 
                                                     'Duration: 5-Year', '</br>',
-                                                    'Rate: ', res, "%"))
+                                                    'Rate: ', res_p, "%"))
       p %>% layout(title = "5-Year Treasury Rates",
                    legend = list(orientation = "h", xanchor = "center", x = 0.5, font = list(size = 15)), 
                    font = list(size = 12), 
@@ -478,7 +502,7 @@ server <- function(session, input, output) {
                   mode = 'markers', marker = list(symbol = 'square', size = 8, color = "#000000"), 
                   hoverinfo= 'text', text = ~paste0('Percentile: ', input$inputPercentile5, '</br></br>', 
                                                     'Duration: 10-Year', '</br>',
-                                                    'Rate: ', res, "%"))
+                                                    'Rate: ', res_p, "%"))
       p %>% layout(title = "10-Year Treasury Rates",
                    legend = list(orientation = "h", xanchor = "center", x = 0.5, font = list(size = 15)), 
                    font = list(size = 12), 
@@ -521,7 +545,7 @@ server <- function(session, input, output) {
                   mode = 'markers', marker = list(symbol = 'square', size = 8, color = "#000000"), 
                   hoverinfo= 'text', text = ~paste0('Percentile: ', input$inputPercentile6, '</br></br>', 
                                                     'Duration: 30-Year', '</br>',
-                                                    'Rate: ', res, "%"))
+                                                    'Rate: ', res_p, "%"))
       p %>% layout(title = "30-Year Treasury Rates",
                    legend = list(orientation = "h", xanchor = "center", x = 0.5, font = list(size = 15)), 
                    font = list(size = 12), 
