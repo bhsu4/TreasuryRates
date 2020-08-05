@@ -62,10 +62,7 @@ ui <- fluidPage(
                 mainPanel(
                     fluidRow(
                         column(width = 12, 
-                            withSpinner(plotlyOutput(outputId = "historicalLP", height = 400))
-                        ), hr(),
-                        column(width = 12, 
-                            withSpinner(plotlyOutput(outputId = "percentileLP", height = 500))
+                            withSpinner(plotlyOutput(outputId = "historicalLP", height = 600))
                         )
                     ), hr()
                 )
@@ -74,7 +71,7 @@ ui <- fluidPage(
         tabPanel(HTML("Percentile of Treasury Yields"), fluid = TRUE, icon = icon("percent"),
             fluidRow(
                 column(width = 12,
-                     fluidRow(tags$label("Input Treasury Rate for Selected Duration(s)"),
+                     fluidRow(HTML("<h3> Input Percentile for Treasury Rates of Select Durations</h3>"),
                           wellPanel(fluidRow(
                                 column(width = 12, 
                                      column(width = 12, 
@@ -100,7 +97,7 @@ ui <- fluidPage(
                      )
                 )
             ), 
-            fluidRow(tags$label("Short-Term"),
+            fluidRow(tags$label("Short Durations"),
                      column(width = 12, 
                          column(width = 4, 
                                 withSpinner(plotlyOutput("plotPercentile1", height = 300))), 
@@ -110,7 +107,7 @@ ui <- fluidPage(
                                 withSpinner(plotlyOutput("plotPercentile3", height = 300))),
                      )
             ), tags$br(), hr(), tags$br(),
-            fluidRow(tags$label("Long-Term"),
+            fluidRow(tags$label("Long Durations"),
                      column(width = 12, 
                         column(width = 4, 
                                withSpinner(plotlyOutput("plotPercentile4", height = 300))),
@@ -252,60 +249,6 @@ server <- function(session, input, output) {
         treasury_long <- treasury_long %>% arrange(value, .by_group = TRUE) #order to avoid line connectivity problems
         return(treasury_long)
     })
-    
-    output$percentileLP <- renderPlotly({
-        
-        shiny::validate(
-            need(length(dur_selected()) >0, "Please Choose a Duration")
-        )
-        
-        #get legend names 
-        treasury_long2 <- treasury_pct() %>% arrange(value, .by_group = TRUE) %>% mutate(count = seq(n()))
-        treasury_long2 <- cbind(treasury_long2, num = 1:nrow(treasury_long2))
-        #add vartitle from merging
-        treasury_long2 <- merge(treasury_long2, duration_names(), by = "variable")
-        #get treasury points
-        treasury_point <- treasury_long2 %>% filter(PCT %in% seq(0, 100, 1)) %>% group_by(vartitle, PCT) %>% 
-                                filter(value == max(value)) %>% distinct(PCT, .keep_all = TRUE)
-        #get treasury points 
-        treasury_labels <- treasury_point[treasury_point$PCT %in% c(1, seq(5, 100, 5)),]
-        treasury_labels <- treasury_labels %>% mutate(labels = PCT) 
-        treasury_labels[which(treasury_labels$PCT == 100), ]$labels <- ""
-        
-        #plotting
-        p <- plot_ly(type = 'scatter', mode = 'lines')
-        for (i in dur_selected()){
-            
-            #start plotting
-            p <- add_trace(p, data = treasury_long2[treasury_long2$variable == i,], 
-                           legendgroup = ~vartitle, x = ~num, y = ~value, 
-                           type = 'scatter', mode = 'lines', 
-                           color = ~vartitle, hoverinfo = 'none')
-            p <- add_trace(p, data = treasury_point[treasury_point$variable == i,], 
-                           legendgroup = ~vartitle, showlegend = F, 
-                           color = ~vartitle, mode = 'markers',               
-                           marker = list(symbol = "circle", size = 8), 
-                           x = ~num, y = ~value, 
-                           hoverinfo = 'text', 
-                           text = ~paste0('Percentile: ', PCT, '</br></br>', 
-                                          'Duration: ', vartitle, '</br>',
-                                          'Rate: ', value, "%"))
-
-        }
-        p %>% layout(title = "Treasury Rates at Select Durations",
-                     legend = list(orientation = "h", xanchor = "center", x = 0.5, font = list(size = 15)), 
-                     font = list(size = 12), 
-                     xaxis = list(title = "", showgrid = TRUE, #showticklabels = FALSE), 
-                                  tickvals = ~treasury_labels$num, ticktext = ~treasury_labels$labels, 
-                                  size = 8, tickangle = 0),
-                     yaxis = list(title = "Treasury Rates", size = 8, tickangle = 0))%>% 
-            config(displaylogo = FALSE, modeBarButtonsToRemove = list("zoomIn2d", "zoomOut2d", "zoom2d", "autoScale2d", "resetScale2d", "select2d", 
-                                                                      "hoverClosestCartesian", "hoverCompareCartesian", "lasso2d", "pan2d"))
-    })
-    
-    
-
-
     
 #### historical percentile tab #########
     
