@@ -53,8 +53,10 @@ ui <- fluidPage(
                                         min = 2010, max = 2020,
                                         value = c(2010,2020)),
                             helpText(HTML("<p style = 'text-align: right'>Last update: 6/30/2020</p>")),
-                            hr(), 
-                            textOutput("poop2"))
+                            hr())#, 
+                            #tags$label("Input Percentile for Selected Duration(s)"),
+                            #wellPanel(fluidRow(align = "center", uiOutput("inputPercentile"))
+                            #), hr())
                        )
                 ),
                 mainPanel(
@@ -75,48 +77,52 @@ ui <- fluidPage(
                      fluidRow(tags$label("Input Treasury Rate for Selected Duration(s)"),
                           wellPanel(fluidRow(
                                 column(width = 12, 
-                                     column(width = 8, 
+                                     column(width = 12, 
                                             sliderInput("percentileTime", "Select Time Interval", min = 2010, max = 2020, 
-                                                        value = c(2010, 2020), step = 1), 
-                                     column(width = 4, 
-                                            helpText("Last Update: 6/30/2020")))
+                                                        value = c(2010, 2020), step = 1))
                                 ),
                                 column(width = 12, 
-                                     column(width = 2, numericInput("inputPercentile1", label = "1-Month", value = 0)), 
-                                     column(width = 2, numericInput("inputPercentile2", label = "6-Month", value = 0)), 
-                                     column(width = 2, numericInput("inputPercentile3", label = "1-Year", value = 0)), 
-                                     column(width = 2, numericInput("inputPercentile4", label = "5-Year", value = 0)), 
-                                     column(width = 2, numericInput("inputPercentile5", label = "10-Year", value = 0)), 
-                                     column(width = 2, numericInput("inputPercentile6", label = "30-Year", value = 0))
+                                     column(width = 2, numericInput("inputPercentile1", label = "Input Percentile (1-Month)", 
+                                                                    value = 50, min = 1, max = 100, step = 1)),
+                                     column(width = 2, numericInput("inputPercentile2", label = "Input Percentile (6-Month)", 
+                                                                    value = 50, min = 1, max = 100, step = 1)), 
+                                     column(width = 2, numericInput("inputPercentile3", label = "Input Percentile (1-Year)", 
+                                                                    value = 50, min = 1, max = 100, step = 1)), 
+                                     column(width = 2, numericInput("inputPercentile4", label = "Input Percentile (5-Year)", 
+                                                                    value = 50, min = 1, max = 100, step = 1)), 
+                                     column(width = 2, numericInput("inputPercentile5", label = "Input Percentile (10-Year)", 
+                                                                    value = 50, min = 1, max = 100, step = 1)), 
+                                     column(width = 2, numericInput("inputPercentile6", label = "Input Percentile (30-Year)", 
+                                                                    value = 50, min = 1, max = 100, step = 1))
                                 )
                             )
                          )
                      )
                 )
             ), 
-            fluidRow(
-                mainPanel(
-                       fluidRow(
-                           column(width = 12, 
-                               column(width = 4, 
-                                      withSpinner(plotlyOutput("plotPercentile1", height = 400))), 
-                               column(width = 4, 
-                                      withSpinner(plotlyOutput("plotPercentile2", height = 400))), 
-                               column(width = 4, 
-                                      withSpinner(plotlyOutput("plotPercentile3", height = 400))),
-                           ),
-                           column(width = 12, 
-                              column(width = 4, 
-                                     withSpinner(plotlyOutput("plotPercentile4", height = 400))),
-                              column(width = 4, 
-                                     withSpinner(plotlyOutput("plotPercentile5", height = 400))), 
-                              column(width = 4, 
-                                     withSpinner(plotlyOutput("plotPercentile6", height = 400)))
-                           )
+            fluidRow(tags$label("Short-Term"),
+                     column(width = 12, 
+                         column(width = 4, 
+                                withSpinner(plotlyOutput("plotPercentile1", height = 300))), 
+                         column(width = 4, 
+                                withSpinner(plotlyOutput("plotPercentile2", height = 300))), 
+                         column(width = 4, 
+                                withSpinner(plotlyOutput("plotPercentile3", height = 300))),
+                     )
+            ), tags$br(), hr(), tags$br(),
+            fluidRow(tags$label("Long-Term"),
+                     column(width = 12, 
+                        column(width = 4, 
+                               withSpinner(plotlyOutput("plotPercentile4", height = 300))),
+                        column(width = 4, 
+                               withSpinner(plotlyOutput("plotPercentile5", height = 300))), 
+                        column(width = 4, 
+                               withSpinner(plotlyOutput("plotPercentile6", height = 300)))
+                           
                            
                     )
                 )
-            )
+            
         ),
         tags$head(
             tags$style(type = 'text/css', 
@@ -155,11 +161,26 @@ server <- function(session, input, output) {
         x <- c(input$historicalDurationA, input$historicalDurationB, input$historicalDurationC)
     })
     
+    # Insert the right number of numericinput objects into the web page
+    output$inputPercentile <- renderUI({
+      numeric_input_list <- lapply(1:length(dur_selected()), function(i) {
+        inputname <- paste("percentileInput", i, sep="")
+        numericInput(inputId = inputname, label = paste(duration_names()[duration_names()$variable == dur_selected()[i],]$vartitle),
+                     value = 50,
+                     min = 1, max = 100,
+                     width = "60%")
+      })
+      
+      # Convert the list to a tagList - this is necessary for the list of items
+      # to display properly.
+      #do.call(tagList, numeric_input_list)
+    })
+    
     treasury_res <- reactive({
         #get treasury time range
         treasury <- treasury_time(input$historicalYear[1], input$historicalYear[2])
         #select duration of interest
-        treasury_select <- treasury %>% select(Date, dur_selected()) 
+        treasury_select <- treasury %>% dplyr::select(Date, dur_selected()) 
         
         treasury_select <- mutate_all(treasury_select, function(x) as.numeric(as.character(x)))
         treasury_select$Date <- treasury$Date
@@ -222,7 +243,7 @@ server <- function(session, input, output) {
     treasury_pct <- reactive({
         #get treasury time range
         treasury <- treasury_time(input$historicalYear[1], input$historicalYear[2])
-        treasury_pct <- treasury %>% select(Date, dur_selected())
+        treasury_pct <- treasury %>% dplyr::select(Date, dur_selected())
         #convert wide to long , drop nas
         treasury_long <- melt(treasury_pct, id.vars = c("Date"))
         treasury_long <- treasury_long[!is.na(as.numeric(as.character(treasury_long$value))),]
@@ -284,34 +305,268 @@ server <- function(session, input, output) {
     
     
 
-    output$poop <- renderText(percentileInputs())
-    
-    observe({
-        time1 <- input$percentileTime[1]
-        time2 <- input$percentileTime[2]
-        #update numeric inputs based on time year selected
-        updateNumericInput(session, "inputPercentile1", label = "1-Month", 
-                           min = min(as.numeric(treasury_time(time1, time2)$X1.Mo)), 
-                           max = max(as.numeric(treasury_time(time1, time2)$X1.Mo)))
-        updateNumericInput(session, "inputPercentile2", label = "6-Month", 
-                           min = min(as.numeric(treasury_time(time1, time2)$X6.Mo)), 
-                           max = max(as.numeric(treasury_time(time1, time2)$X6.Mo)))
-        updateNumericInput(session, "inputPercentile3", label = "1-Year", 
-                           min = min(as.numeric(treasury_time(time1, time2)$X1.Yr)), 
-                           max = max(as.numeric(treasury_time(time1, time2)$X1.Yr)))
-        updateNumericInput(session, "inputPercentile4", label = "5-Year", 
-                           min = min(as.numeric(treasury_time(time1, time2)$X5.Yr)), 
-                           max = max(as.numeric(treasury_time(time1, time2)$X5.Yr)))
-        updateNumericInput(session, "inputPercentile5", label = "10-Year", 
-                           min = min(as.numeric(treasury_time(time1, time2)$X10.Yr)), 
-                           max = max(as.numeric(treasury_time(time1, time2)$X10.Yr)))
-        updateNumericInput(session, "inputPercentile6", label = "30-Year", 
-                           min = min(as.numeric(treasury_time(time1, time2)$X30.Yr)), 
-                           max = max(as.numeric(treasury_time(time1, time2)$X30.Yr)))
-    })
-  
-    
 
+    
+#### historical percentile tab #########
+    
+    output$plotPercentile1 <- renderPlotly({
+        treasury <- treasury_time(input$percentileTime[1], input$percentileTime[2])
+        treasury_pct <- treasury %>% dplyr::select(Date, "X1.Mo")
+        #convert wide to long , drop nas
+        treasury_long <- melt(treasury_pct, id.vars = c("Date"))
+        treasury_long <- treasury_long[!is.na(as.numeric(as.character(treasury_long$value))),]
+        treasury_long2 <- treasury_long %>% group_by(variable) %>% 
+                            mutate(count = seq(n()),  percentile = ecdf(value)(value)) %>% 
+                            arrange(percentile)
+        #finding percentile pooint
+        my_k <- max(which(input$inputPercentile1/100 >= treasury_long2$percentile))
+        pdiff_total <- treasury_long2[my_k+1,]$percentile - treasury_long2[my_k,]$percentile
+        pdiff <- input$inputPercentile1/100 - treasury_long2[my_k,]$percentile
+        res_p <- pdiff/pdiff_total*as.numeric(treasury_long2[my_k+1,]$value) + (1-pdiff/pdiff_total)*as.numeric(treasury_long2[my_k,]$value)
+        
+        #get the circular points for general percentiles 
+        res_ps <- find_seqpercentiles(treasury_long2)
+        
+        p <- plot_ly(data = treasury_long2, 
+                        legendgroup = "1-Month", x = ~percentile*100, y = ~value, 
+                        type = 'scatter', mode = 'lines', 
+                        color = "1-Month", hoverinfo = 'none') %>% 
+                add_trace(p, data = res_ps, x = ~perct, y = ~rate, 
+                          showlegend = F, mode = 'markers', marker = list(symbol = 'circle', size = 8), 
+                          hoverinfo= 'text', 
+                          text = ~paste0('Percentile: ', perct, '</br></br>', 
+                                        'Duration: 1-Month', '</br>',
+                                        'Rate: ', rate, "%")) %>% 
+                add_trace(p, x = input$inputPercentile1, y = res_p, 
+                          showlegend = F, 
+                          mode = 'markers', marker = list(symbol = 'square', size = 8, color = "#000000"), 
+                          hoverinfo= 'text', text = ~paste0('Percentile: ', input$inputPercentile1, '</br></br>', 
+                                                            'Duration: 1-Month', '</br>',
+                                                            'Rate: ', res, "%"))
+        
+        p %>% layout(title = "1-Month Treasury Rates",
+                     legend = list(orientation = "h", xanchor = "center", x = 0.5, font = list(size = 15)), 
+                     font = list(size = 12), 
+                     xaxis = list(title = "Percentile", showgrid = FALSE, size = 8, tickangle = 0),
+                     yaxis = list(title = "Treasury Rates", size = 8, tickangle = 0))%>% 
+          config(displaylogo = FALSE, modeBarButtonsToRemove = list("zoomIn2d", "zoomOut2d", "zoom2d", "autoScale2d", "resetScale2d", "select2d", 
+                                                                    "hoverClosestCartesian", "hoverCompareCartesian", "lasso2d", "pan2d"))
+    })
+    
+    output$plotPercentile2 <- renderPlotly({
+      treasury <- treasury_time(input$percentileTime[1], input$percentileTime[2])
+      treasury_pct <- treasury %>% dplyr::select(Date, "X6.Mo")
+      #convert wide to long , drop nas
+      treasury_long <- melt(treasury_pct, id.vars = c("Date"))
+      treasury_long <- treasury_long[!is.na(as.numeric(as.character(treasury_long$value))),]
+      treasury_long2 <- treasury_long %>% group_by(variable) %>% 
+                          mutate(count = seq(n()),  percentile = ecdf(value)(value)) %>% 
+                          arrange(percentile)
+      #finding percentile point
+      my_k <- max(which(input$inputPercentile2/100 >= treasury_long2$percentile))
+      pdiff_total <- treasury_long2[my_k+1,]$percentile - treasury_long2[my_k,]$percentile
+      pdiff <- input$inputPercentile2/100 - treasury_long2[my_k,]$percentile
+      res_p <- pdiff/pdiff_total*as.numeric(treasury_long2[my_k+1,]$value) + (1-pdiff/pdiff_total)*as.numeric(treasury_long2[my_k,]$value)
+      
+      #get the circular points for general percentiles 
+      res_ps <- find_seqpercentiles(treasury_long2)
+      
+      p <- plot_ly(data = treasury_long2, 
+                   legendgroup = "6-Month", x = ~percentile*100, y = ~value, 
+                   type = 'scatter', mode = 'lines', 
+                   color = "1-Month", hoverinfo = 'none') %>% 
+        add_trace(p, data = res_ps, x = ~perct, y = ~rate, 
+                  showlegend = F, mode = 'markers', marker = list(symbol = 'circle', size = 8), 
+                  hoverinfo= 'text', 
+                  text = ~paste0('Percentile: ', perct, '</br></br>', 
+                                 'Duration: 6-Month', '</br>',
+                                 'Rate: ', rate, "%")) %>% 
+        add_trace(p, x = input$inputPercentile2, y = res_p, 
+                  showlegend = F, 
+                  mode = 'markers', marker = list(symbol = 'square', size = 8, color = "#000000"), 
+                  hoverinfo= 'text', text = ~paste0('Percentile: ', input$inputPercentile2, '</br></br>', 
+                                                    'Duration: 6-Month', '</br>',
+                                                    'Rate: ', res, "%"))
+      p %>% layout(title = "6-Month Treasury Rates",
+                   legend = list(orientation = "h", xanchor = "center", x = 0.5, font = list(size = 15)), 
+                   font = list(size = 12), 
+                   xaxis = list(title = "Percentile", showgrid = FALSE, size = 8, tickangle = 0),
+                   yaxis = list(title = "Treasury Rates", size = 8, tickangle = 0))%>% 
+        config(displaylogo = FALSE, modeBarButtonsToRemove = list("zoomIn2d", "zoomOut2d", "zoom2d", "autoScale2d", "resetScale2d", "select2d", 
+                                                                  "hoverClosestCartesian", "hoverCompareCartesian", "lasso2d", "pan2d"))
+    })
+ 
+    output$plotPercentile3 <- renderPlotly({
+      treasury <- treasury_time(input$percentileTime[1], input$percentileTime[2])
+      treasury_pct <- treasury %>% dplyr::select(Date, "X1.Yr")
+      #convert wide to long , drop nas
+      treasury_long <- melt(treasury_pct, id.vars = c("Date"))
+      treasury_long <- treasury_long[!is.na(as.numeric(as.character(treasury_long$value))),]
+      treasury_long2 <- treasury_long %>% group_by(variable) %>% 
+        mutate(count = seq(n()),  percentile = ecdf(value)(value)) %>% 
+        arrange(percentile)
+      #finding percentile point
+      my_k <- max(which(input$inputPercentile3/100 >= treasury_long2$percentile))
+      pdiff_total <- treasury_long2[my_k+1,]$percentile - treasury_long2[my_k,]$percentile
+      pdiff <- input$inputPercentile3/100 - treasury_long2[my_k,]$percentile
+      res_p <- pdiff/pdiff_total*as.numeric(treasury_long2[my_k+1,]$value) + (1-pdiff/pdiff_total)*as.numeric(treasury_long2[my_k,]$value)
+      
+      #get the circular points for general percentiles 
+      res_ps <- find_seqpercentiles(treasury_long2)
+      
+      p <- plot_ly(data = treasury_long2, 
+                   legendgroup = "1-Year", x = ~percentile*100, y = ~value, 
+                   type = 'scatter', mode = 'lines', 
+                   color = "1-Year", hoverinfo = 'none') %>% 
+        add_trace(p, data = res_ps, x = ~perct, y = ~rate, 
+                  showlegend = F, mode = 'markers', marker = list(symbol = 'circle', size = 8), 
+                  hoverinfo= 'text', 
+                  text = ~paste0('Percentile: ', perct, '</br></br>', 
+                                 'Duration: 1-Year', '</br>',
+                                 'Rate: ', rate, "%")) %>% 
+        add_trace(p, x = input$inputPercentile3, y = res_p, 
+                  showlegend = F, 
+                  mode = 'markers', marker = list(symbol = 'square', size = 8, color = "#000000"), 
+                  hoverinfo= 'text', text = ~paste0('Percentile: ', input$inputPercentile3, '</br></br>', 
+                                                    'Duration: 1-Year', '</br>',
+                                                    'Rate: ', res, "%"))
+      p %>% layout(title = "1-Year Treasury Rates",
+                   legend = list(orientation = "h", xanchor = "center", x = 0.5, font = list(size = 15)), 
+                   font = list(size = 12), 
+                   xaxis = list(title = "Percentile", showgrid = FALSE, size = 8, tickangle = 0),
+                   yaxis = list(title = "Treasury Rates", size = 8, tickangle = 0))%>% 
+        config(displaylogo = FALSE, modeBarButtonsToRemove = list("zoomIn2d", "zoomOut2d", "zoom2d", "autoScale2d", "resetScale2d", "select2d", 
+                                                                  "hoverClosestCartesian", "hoverCompareCartesian", "lasso2d", "pan2d"))
+    })
+    
+    output$plotPercentile4 <- renderPlotly({
+      treasury <- treasury_time(input$percentileTime[1], input$percentileTime[2])
+      treasury_pct <- treasury %>% dplyr::select(Date, "X5.Yr")
+      #convert wide to long , drop nas
+      treasury_long <- melt(treasury_pct, id.vars = c("Date"))
+      treasury_long <- treasury_long[!is.na(as.numeric(as.character(treasury_long$value))),]
+      treasury_long2 <- treasury_long %>% group_by(variable) %>% 
+        mutate(count = seq(n()),  percentile = ecdf(value)(value)) %>% 
+        arrange(percentile)
+      #finding percentile point
+      my_k <- max(which(input$inputPercentile4/100 >= treasury_long2$percentile))
+      pdiff_total <- treasury_long2[my_k+1,]$percentile - treasury_long2[my_k,]$percentile
+      pdiff <- input$inputPercentile4/100 - treasury_long2[my_k,]$percentile
+      res_p <- pdiff/pdiff_total*as.numeric(treasury_long2[my_k+1,]$value) + (1-pdiff/pdiff_total)*as.numeric(treasury_long2[my_k,]$value)
+      
+      #get the circular points for general percentiles 
+      res_ps <- find_seqpercentiles(treasury_long2)
+      
+      p <- plot_ly(data = treasury_long2, 
+                   legendgroup = "5-Year", x = ~percentile*100, y = ~value, 
+                   type = 'scatter', mode = 'lines', 
+                   color = "5-Year", hoverinfo = 'none') %>% 
+        add_trace(p, data = res_ps, x = ~perct, y = ~rate, 
+                  showlegend = F, mode = 'markers', marker = list(symbol = 'circle', size = 8), 
+                  hoverinfo= 'text', 
+                  text = ~paste0('Percentile: ', perct, '</br></br>', 
+                                 'Duration: 5-Year', '</br>',
+                                 'Rate: ', rate, "%")) %>% 
+        add_trace(p, x = input$inputPercentile4, y = res_p, 
+                  showlegend = F, 
+                  mode = 'markers', marker = list(symbol = 'square', size = 8, color = "#000000"), 
+                  hoverinfo= 'text', text = ~paste0('Percentile: ', input$inputPercentile4, '</br></br>', 
+                                                    'Duration: 5-Year', '</br>',
+                                                    'Rate: ', res, "%"))
+      p %>% layout(title = "5-Year Treasury Rates",
+                   legend = list(orientation = "h", xanchor = "center", x = 0.5, font = list(size = 15)), 
+                   font = list(size = 12), 
+                   xaxis = list(title = "Percentile", showgrid = FALSE, size = 8, tickangle = 0),
+                   yaxis = list(title = "Treasury Rates", size = 8, tickangle = 0))%>% 
+        config(displaylogo = FALSE, modeBarButtonsToRemove = list("zoomIn2d", "zoomOut2d", "zoom2d", "autoScale2d", "resetScale2d", "select2d", 
+                                                                  "hoverClosestCartesian", "hoverCompareCartesian", "lasso2d", "pan2d"))
+    })
+    
+    output$plotPercentile5 <- renderPlotly({
+      treasury <- treasury_time(input$percentileTime[1], input$percentileTime[2])
+      treasury_pct <- treasury %>% dplyr::select(Date, "X10.Yr")
+      #convert wide to long , drop nas
+      treasury_long <- melt(treasury_pct, id.vars = c("Date"))
+      treasury_long <- treasury_long[!is.na(as.numeric(as.character(treasury_long$value))),]
+      treasury_long2 <- treasury_long %>% group_by(variable) %>% 
+        mutate(count = seq(n()),  percentile = ecdf(value)(value)) %>% 
+        arrange(percentile)
+      #finding percentile point
+      my_k <- max(which(input$inputPercentile5/100 >= treasury_long2$percentile))
+      pdiff_total <- treasury_long2[my_k+1,]$percentile - treasury_long2[my_k,]$percentile
+      pdiff <- input$inputPercentile5/100 - treasury_long2[my_k,]$percentile
+      res_p <- pdiff/pdiff_total*as.numeric(treasury_long2[my_k+1,]$value) + (1-pdiff/pdiff_total)*as.numeric(treasury_long2[my_k,]$value)
+      
+      #get the circular points for general percentiles 
+      res_ps <- find_seqpercentiles(treasury_long2)
+      
+      p <- plot_ly(data = treasury_long2, 
+                   legendgroup = "10-Year", x = ~percentile*100, y = ~value, 
+                   type = 'scatter', mode = 'lines', 
+                   color = "10-Year", hoverinfo = 'none') %>% 
+        add_trace(p, data = res_ps, x = ~perct, y = ~rate, 
+                  showlegend = F, mode = 'markers', marker = list(symbol = 'circle', size = 8), 
+                  hoverinfo= 'text', 
+                  text = ~paste0('Percentile: ', perct, '</br></br>', 
+                                 'Duration: 10-Year', '</br>',
+                                 'Rate: ', rate, "%")) %>% 
+        add_trace(p, x = input$inputPercentile5, y = res_p, 
+                  showlegend = F, 
+                  mode = 'markers', marker = list(symbol = 'square', size = 8, color = "#000000"), 
+                  hoverinfo= 'text', text = ~paste0('Percentile: ', input$inputPercentile5, '</br></br>', 
+                                                    'Duration: 10-Year', '</br>',
+                                                    'Rate: ', res, "%"))
+      p %>% layout(title = "10-Year Treasury Rates",
+                   legend = list(orientation = "h", xanchor = "center", x = 0.5, font = list(size = 15)), 
+                   font = list(size = 12), 
+                   xaxis = list(title = "Percentile", showgrid = FALSE, size = 8, tickangle = 0),
+                   yaxis = list(title = "Treasury Rates", size = 8, tickangle = 0))%>% 
+        config(displaylogo = FALSE, modeBarButtonsToRemove = list("zoomIn2d", "zoomOut2d", "zoom2d", "autoScale2d", "resetScale2d", "select2d", 
+                                                                  "hoverClosestCartesian", "hoverCompareCartesian", "lasso2d", "pan2d"))
+    })
+    
+    output$plotPercentile6 <- renderPlotly({
+      treasury <- treasury_time(input$percentileTime[1], input$percentileTime[2])
+      treasury_pct <- treasury %>% dplyr::select(Date, "X30.Yr")
+      #convert wide to long , drop nas
+      treasury_long <- melt(treasury_pct, id.vars = c("Date"))
+      treasury_long <- treasury_long[!is.na(as.numeric(as.character(treasury_long$value))),]
+      treasury_long2 <- treasury_long %>% group_by(variable) %>% 
+        mutate(count = seq(n()),  percentile = ecdf(value)(value)) %>% 
+        arrange(percentile)
+      #finding percentile point
+      my_k <- max(which(input$inputPercentile6/100 >= treasury_long2$percentile))
+      pdiff_total <- treasury_long2[my_k+1,]$percentile - treasury_long2[my_k,]$percentile
+      pdiff <- input$inputPercentile6/100 - treasury_long2[my_k,]$percentile
+      res_p <- pdiff/pdiff_total*as.numeric(treasury_long2[my_k+1,]$value) + (1-pdiff/pdiff_total)*as.numeric(treasury_long2[my_k,]$value)
+      
+      #get the circular points for general percentiles 
+      res_ps <- find_seqpercentiles(treasury_long2)
+      
+      p <- plot_ly(data = treasury_long2, 
+                   legendgroup = "30-Year", x = ~percentile*100, y = ~value, 
+                   type = 'scatter', mode = 'lines', 
+                   color = "30-Year", hoverinfo = 'none') %>% 
+        add_trace(p, data = res_ps, x = ~perct, y = ~rate, 
+                  showlegend = F, mode = 'markers', marker = list(symbol = 'circle', size = 8), 
+                  hoverinfo= 'text', 
+                  text = ~paste0('Percentile: ', perct, '</br></br>', 
+                                 'Duration: 30-Year', '</br>',
+                                 'Rate: ', rate, "%")) %>% 
+        add_trace(p, x = input$inputPercentile6, y = res_p, 
+                  showlegend = F, 
+                  mode = 'markers', marker = list(symbol = 'square', size = 8, color = "#000000"), 
+                  hoverinfo= 'text', text = ~paste0('Percentile: ', input$inputPercentile6, '</br></br>', 
+                                                    'Duration: 30-Year', '</br>',
+                                                    'Rate: ', res, "%"))
+      p %>% layout(title = "30-Year Treasury Rates",
+                   legend = list(orientation = "h", xanchor = "center", x = 0.5, font = list(size = 15)), 
+                   font = list(size = 12), 
+                   xaxis = list(title = "Percentile", showgrid = FALSE, size = 8, tickangle = 0),
+                   yaxis = list(title = "Treasury Rates", size = 8, tickangle = 0))%>% 
+        config(displaylogo = FALSE, modeBarButtonsToRemove = list("zoomIn2d", "zoomOut2d", "zoom2d", "autoScale2d", "resetScale2d", "select2d", 
+                                                                  "hoverClosestCartesian", "hoverCompareCartesian", "lasso2d", "pan2d"))
+    })
     
     
 }
