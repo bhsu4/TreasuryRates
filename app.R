@@ -71,7 +71,7 @@ ui <- fluidPage(
         tabPanel(HTML("Percentile of Treasury Yields"), fluid = TRUE, icon = icon("percent"),
             fluidRow(
                 column(width = 12,
-                     fluidRow(HTML("<h3> Input Percentile for Treasury Rates of Select Durations</h3>"),
+                     fluidRow(HTML("<h3>Input Percentile for Treasury Rates of Select Durations</h3>"),
                           wellPanel(fluidRow(
                                 column(width = 12, 
                                      column(width = 12, 
@@ -121,14 +121,34 @@ ui <- fluidPage(
                 )
             
         ),
+        #navbarMenu("More", icon = icon("info-circle"),
+            tabPanel("About", fluid = TRUE, icon = icon("info-circle"),
+                fluidRow(
+                  column(6,
+                         HTML(paste0("<h2><b>Treasury Yield Curves</b></h2>")), hr(),
+                         HTML(paste0("<h4>The daily treasury yield curve rates is directly taken from the ", 
+                              a("US Department of Treasury", href = "https://home.treasury.gov/policy-issues/financing-the-government/interest-rate-statistics"), 
+                              ".", HTML("</br></br>"), "The US Department of Treasury explains the treasury yield curves as", HTML("</br></br>"),
+                              shinydashboardPlus::blockQuote("[A curve that] relates the yield on a security to 
+                                                               its time to maturity based on the closing market bid yields 
+                                                               on actively traded Treasury securities in the over-the-counter 
+                                                               market. These market yields are calculated from composites of 
+                                                               quotations obtained by the Federal Reserve Bank of New York."))
+                         ), HTML("</br>"),
+                  HTML(paste0("<h2><b>How It Impacts Us</b></h2>")), hr(),
+                              HTML(paste0("<h4> hi brad </h4>"))
+                 )
+              )
+           )
+        ),
         tags$head(
-            tags$style(type = 'text/css', 
-                       HTML('.navbar-default .navbar-nav > .active >a:hover {color: #555;}
-                             .navbar-default .navbar-nav > .active >a {color: #047cdc;}
-                             .navbar-default .navbar-nav > .active >a:focus {color: #000}')
-            )
-        )
-    )
+          tags$style(type = 'text/css', 
+                     HTML('.navbar-default .navbar-nav > .active >a:hover {color: #555;}
+                                 .navbar-default .navbar-nav > .active >a {color: #047cdc;}
+                                 .navbar-default .navbar-nav > .active >a:focus {color: #000}')
+          )
+       )
+    #)
 )
 
 
