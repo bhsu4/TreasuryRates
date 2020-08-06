@@ -36,6 +36,23 @@ find_seqpercentiles <- function(dat){
   return(data.frame(perct = quantile_focus*100, rate = res_p))
 }
 
+find_seqcurr <- function(current_point, dat){
+  if(current_point <= as.numeric(min(dat$value))){
+    perct_x = min(dat[which(dat$value == as.numeric(min(dat$value))),]$percentile)
+  }
+  else if(current_point >= as.numeric(max(dat$value))){
+    perct_x = 1
+  }
+  else{
+    my_k <- min(which(current_point <= dat$value))
+    total_diff = as.numeric(dat[my_k,]$value)-as.numeric(dat[my_k-1,]$value)
+    curr_diff <- current_point-as.numeric(dat[my_k-1,]$value)
+    perct_x = curr_diff/total_diff*as.numeric(dat[my_k,]$percentile) +
+                (1-curr_diff/total_diff)*as.numeric(dat[my_k-1,]$percentile)
+  }
+  return(data.frame(perct = perct_x, rate = current_point))
+}
+
 # Define UI
 ui <- fluidPage(
     list(tags$head(HTML('<link rel="icon", href="symetra-favicon.png", type="image/png" />'))),
@@ -169,7 +186,7 @@ ui <- fluidPage(
           tags$style(type = 'text/css', 
                      HTML('.navbar-default .navbar-nav > .active >a:hover {color: #555;}
                                  .navbar-default .navbar-nav > .active >a {color: #047cdc;}
-                                 .navbar-default .navbar-nav > .active >a:focus {color: #000}')
+                                 .navbar-default .navbar-nav > .active >a:focus {color: #047cdc}')
           )
        )
     #)
@@ -187,6 +204,8 @@ treasury_time <- function(t1, t2){
     #choose interval of interest
     return(treasury %>% filter(year >= t1 & year <= t2))
 }
+
+
 
 duration_names <- reactive({
     data.frame(variable = c("X1.Mo", "X2.Mo", "X3.Mo", "X6.Mo", "X1.Yr", "X2.Yr", 
@@ -296,6 +315,14 @@ server <- function(session, input, output) {
     
 #### historical percentile tab #########
     
+    curr_point <- reactive({
+        treasury <- read.csv("TreasuryRates.csv")
+        #convert to date format
+        treasury$Date <- as.Date(treasury$Date, "%m/%d/%Y")
+        current <- treasury[which.max(treasury$Date),]
+        return(current)
+    })     
+
     output$plotPercentile1 <- renderPlotly({
         treasury <- treasury_time(input$percentileTime[1], input$percentileTime[2])
         treasury_pct <- treasury %>% dplyr::select(Date, "X1.Mo")
@@ -311,6 +338,9 @@ server <- function(session, input, output) {
         pdiff <- input$inputPercentile1/100 - treasury_long2[my_k,]$percentile
         res_p <- pdiff/pdiff_total*as.numeric(treasury_long2[my_k+1,]$value) + (1-pdiff/pdiff_total)*as.numeric(treasury_long2[my_k,]$value)
         
+        #most recent point 
+        curr = as.numeric(as.character(curr_point()[,"X1.Mo"])) #current point despite chosen time range
+        res_curr <- find_seqcurr(curr, treasury_long2)
         #get the circular points for general percentiles 
         res_ps <- find_seqpercentiles(treasury_long2)
         
@@ -326,16 +356,23 @@ server <- function(session, input, output) {
                                         'Rate: ', rate, "%")) %>% 
                 add_trace(p, x = input$inputPercentile1, y = res_p, 
                           showlegend = F, 
-                          mode = 'markers', marker = list(symbol = 'square', size = 8, color = "#000000"), 
+                          mode = 'markers', marker = list(symbol = 'triangle', size = 10, color = "#aaaaaa"), 
                           hoverinfo= 'text', text = ~paste0('Percentile: ', input$inputPercentile1, '</br></br>', 
                                                             'Duration: 1-Month', '</br>',
-                                                            'Rate: ', res_p, "%"))
-        
+                                                            'Rate: ', round(res_p,3), "%")) %>% 
+                add_trace(p, x = res_curr$perct*100, y = res_curr$rate, showlegend = F, 
+                          mode = 'markers', marker = list(symbol = 'square', size = 10, color = "#000000"), 
+                          hoverinfo= 'text', text = ~paste0('Percentile: ', round(res_curr$perct*100,3), '</br></br>', 
+                                                            'Latest Date: ', curr_point()$Date, '</br>',
+                                                            'Duration: 1-Month', '</br>',
+                                                            'Rate: ', round(res_curr$rate,3), "%"))
         p %>% layout(title = "1-Month Treasury Rates",
                      legend = list(orientation = "h", xanchor = "center", x = 0.5, font = list(size = 15)), 
                      font = list(size = 12), 
                      xaxis = list(title = "Percentile", showgrid = FALSE, size = 8, tickangle = 0),
-                     yaxis = list(title = "Treasury Rates", size = 8, tickangle = 0))%>% 
+                     yaxis = list(title = "Treasury Rates", size = 8, tickangle = 0), 
+                     annotations = list(x = res_curr$perct*100, y = res_curr$rate, text = curr_point()$Date, 
+                                        xref = "x", yref = "y", showarrow = TRUE, arrowhead = 7, ax = 20, ay = -40))%>% 
           config(displaylogo = FALSE, modeBarButtonsToRemove = list("zoomIn2d", "zoomOut2d", "zoom2d", "autoScale2d", "resetScale2d", "select2d", 
                                                                     "hoverClosestCartesian", "hoverCompareCartesian", "lasso2d", "pan2d"))
     })
@@ -354,7 +391,9 @@ server <- function(session, input, output) {
       pdiff_total <- treasury_long2[my_k+1,]$percentile - treasury_long2[my_k,]$percentile
       pdiff <- input$inputPercentile2/100 - treasury_long2[my_k,]$percentile
       res_p <- pdiff/pdiff_total*as.numeric(treasury_long2[my_k+1,]$value) + (1-pdiff/pdiff_total)*as.numeric(treasury_long2[my_k,]$value)
-      
+      #most recent point 
+      curr = as.numeric(as.character(curr_point()[,"X6.Mo"])) #current point despite chosen time range
+      res_curr <- find_seqcurr(curr, treasury_long2)
       #get the circular points for general percentiles 
       res_ps <- find_seqpercentiles(treasury_long2)
       
@@ -370,15 +409,24 @@ server <- function(session, input, output) {
                                  'Rate: ', rate, "%")) %>% 
         add_trace(p, x = input$inputPercentile2, y = res_p, 
                   showlegend = F, 
-                  mode = 'markers', marker = list(symbol = 'square', size = 8, color = "#000000"), 
+                  mode = 'markers', marker = list(symbol = 'circle', size = 10, color = "#aaaaaa"), 
                   hoverinfo= 'text', text = ~paste0('Percentile: ', input$inputPercentile2, '</br></br>', 
                                                     'Duration: 6-Month', '</br>',
-                                                    'Rate: ', res_p, "%"))
+                                                    'Rate: ', res_p, "%"))%>% 
+        add_trace(p, x = res_curr$perct*100, y = res_curr$rate, showlegend = F, 
+                  mode = 'markers', marker = list(symbol = 'square', size = 10, color = "#000000"), 
+                  hoverinfo= 'text', text = ~paste0('Percentile: ', round(res_curr$perct*100,3), '</br></br>', 
+                                                    'Latest Date: ', curr_point()$Date, '</br>',
+                                                    'Duration: 1-Month', '</br>',
+                                                    'Rate: ', round(res_curr$rate,3), "%"))
+      
       p %>% layout(title = "6-Month Treasury Rates",
                    legend = list(orientation = "h", xanchor = "center", x = 0.5, font = list(size = 15)), 
                    font = list(size = 12), 
                    xaxis = list(title = "Percentile", showgrid = FALSE, size = 8, tickangle = 0),
-                   yaxis = list(title = "Treasury Rates", size = 8, tickangle = 0))%>% 
+                   yaxis = list(title = "Treasury Rates", size = 8, tickangle = 0), 
+                   annotations = list(x = res_curr$perct*100, y = res_curr$rate, text = curr_point()$Date, 
+                                      xref = "x", yref = "y", showarrow = TRUE, arrowhead = 7, ax = 20, ay = -40)) %>% 
         config(displaylogo = FALSE, modeBarButtonsToRemove = list("zoomIn2d", "zoomOut2d", "zoom2d", "autoScale2d", "resetScale2d", "select2d", 
                                                                   "hoverClosestCartesian", "hoverCompareCartesian", "lasso2d", "pan2d"))
     })
@@ -397,7 +445,9 @@ server <- function(session, input, output) {
       pdiff_total <- treasury_long2[my_k+1,]$percentile - treasury_long2[my_k,]$percentile
       pdiff <- input$inputPercentile3/100 - treasury_long2[my_k,]$percentile
       res_p <- pdiff/pdiff_total*as.numeric(treasury_long2[my_k+1,]$value) + (1-pdiff/pdiff_total)*as.numeric(treasury_long2[my_k,]$value)
-      
+      #most recent point 
+      curr = as.numeric(as.character(curr_point()[,"X1.Yr"])) #current point despite chosen time range
+      res_curr <- find_seqcurr(curr, treasury_long2)
       #get the circular points for general percentiles 
       res_ps <- find_seqpercentiles(treasury_long2)
       
@@ -413,15 +463,23 @@ server <- function(session, input, output) {
                                  'Rate: ', rate, "%")) %>% 
         add_trace(p, x = input$inputPercentile3, y = res_p, 
                   showlegend = F, 
-                  mode = 'markers', marker = list(symbol = 'square', size = 8, color = "#000000"), 
+                  mode = 'markers', marker = list(symbol = 'circle', size = 10, color = "#aaaaaa"), 
                   hoverinfo= 'text', text = ~paste0('Percentile: ', input$inputPercentile3, '</br></br>', 
                                                     'Duration: 1-Year', '</br>',
-                                                    'Rate: ', res_p, "%"))
+                                                    'Rate: ', res_p, "%"))%>% 
+        add_trace(p, x = res_curr$perct*100, y = res_curr$rate, showlegend = F, 
+                  mode = 'markers', marker = list(symbol = 'square', size = 10, color = "#000000"), 
+                  hoverinfo= 'text', text = ~paste0('Percentile: ', round(res_curr$perct*100,3), '</br></br>', 
+                                                    'Latest Date: ', curr_point()$Date, '</br>',
+                                                    'Duration: 1-Month', '</br>',
+                                                    'Rate: ', round(res_curr$rate,3), "%"))
       p %>% layout(title = "1-Year Treasury Rates",
                    legend = list(orientation = "h", xanchor = "center", x = 0.5, font = list(size = 15)), 
                    font = list(size = 12), 
                    xaxis = list(title = "Percentile", showgrid = FALSE, size = 8, tickangle = 0),
-                   yaxis = list(title = "Treasury Rates", size = 8, tickangle = 0))%>% 
+                   yaxis = list(title = "Treasury Rates", size = 8, tickangle = 0), 
+                   annotations = list(x = res_curr$perct*100, y = res_curr$rate, text = curr_point()$Date, 
+                                      xref = "x", yref = "y", showarrow = TRUE, arrowhead = 7, ax = 20, ay = -40))%>% 
         config(displaylogo = FALSE, modeBarButtonsToRemove = list("zoomIn2d", "zoomOut2d", "zoom2d", "autoScale2d", "resetScale2d", "select2d", 
                                                                   "hoverClosestCartesian", "hoverCompareCartesian", "lasso2d", "pan2d"))
     })
@@ -440,7 +498,9 @@ server <- function(session, input, output) {
       pdiff_total <- treasury_long2[my_k+1,]$percentile - treasury_long2[my_k,]$percentile
       pdiff <- input$inputPercentile4/100 - treasury_long2[my_k,]$percentile
       res_p <- pdiff/pdiff_total*as.numeric(treasury_long2[my_k+1,]$value) + (1-pdiff/pdiff_total)*as.numeric(treasury_long2[my_k,]$value)
-      
+      #most recent point 
+      curr = as.numeric(as.character(curr_point()[,"X5.Yr"])) #current point despite chosen time range
+      res_curr <- find_seqcurr(curr, treasury_long2)
       #get the circular points for general percentiles 
       res_ps <- find_seqpercentiles(treasury_long2)
       
@@ -456,15 +516,23 @@ server <- function(session, input, output) {
                                  'Rate: ', rate, "%")) %>% 
         add_trace(p, x = input$inputPercentile4, y = res_p, 
                   showlegend = F, 
-                  mode = 'markers', marker = list(symbol = 'square', size = 8, color = "#000000"), 
+                  mode = 'markers', marker = list(symbol = 'circle', size = 10, color = "#aaaaaa"), 
                   hoverinfo= 'text', text = ~paste0('Percentile: ', input$inputPercentile4, '</br></br>', 
                                                     'Duration: 5-Year', '</br>',
-                                                    'Rate: ', res_p, "%"))
+                                                    'Rate: ', res_p, "%")) %>% 
+        add_trace(p, x = res_curr$perct*100, y = res_curr$rate, showlegend = F, 
+                  mode = 'markers', marker = list(symbol = 'square', size = 10, color = "#000000"), 
+                  hoverinfo= 'text', text = ~paste0('Percentile: ', round(res_curr$perct*100,3), '</br></br>', 
+                                                    'Latest Date: ', curr_point()$Date, '</br>',
+                                                    'Duration: 1-Month', '</br>',
+                                                    'Rate: ', round(res_curr$rate,3), "%"))
       p %>% layout(title = "5-Year Treasury Rates",
                    legend = list(orientation = "h", xanchor = "center", x = 0.5, font = list(size = 15)), 
                    font = list(size = 12), 
                    xaxis = list(title = "Percentile", showgrid = FALSE, size = 8, tickangle = 0),
-                   yaxis = list(title = "Treasury Rates", size = 8, tickangle = 0))%>% 
+                   yaxis = list(title = "Treasury Rates", size = 8, tickangle = 0), 
+                   annotations = list(x = res_curr$perct*100, y = res_curr$rate, text = curr_point()$Date, 
+                                      xref = "x", yref = "y", showarrow = TRUE, arrowhead = 7, ax = 20, ay = -40))%>% 
         config(displaylogo = FALSE, modeBarButtonsToRemove = list("zoomIn2d", "zoomOut2d", "zoom2d", "autoScale2d", "resetScale2d", "select2d", 
                                                                   "hoverClosestCartesian", "hoverCompareCartesian", "lasso2d", "pan2d"))
     })
@@ -483,7 +551,9 @@ server <- function(session, input, output) {
       pdiff_total <- treasury_long2[my_k+1,]$percentile - treasury_long2[my_k,]$percentile
       pdiff <- input$inputPercentile5/100 - treasury_long2[my_k,]$percentile
       res_p <- pdiff/pdiff_total*as.numeric(treasury_long2[my_k+1,]$value) + (1-pdiff/pdiff_total)*as.numeric(treasury_long2[my_k,]$value)
-      
+      #most recent point 
+      curr = as.numeric(as.character(curr_point()[,"X10.Yr"])) #current point despite chosen time range
+      res_curr <- find_seqcurr(curr, treasury_long2)
       #get the circular points for general percentiles 
       res_ps <- find_seqpercentiles(treasury_long2)
       
@@ -499,15 +569,23 @@ server <- function(session, input, output) {
                                  'Rate: ', rate, "%")) %>% 
         add_trace(p, x = input$inputPercentile5, y = res_p, 
                   showlegend = F, 
-                  mode = 'markers', marker = list(symbol = 'square', size = 8, color = "#000000"), 
+                  mode = 'markers', marker = list(symbol = 'circle', size = 10, color = "#aaaaaa"), 
                   hoverinfo= 'text', text = ~paste0('Percentile: ', input$inputPercentile5, '</br></br>', 
                                                     'Duration: 10-Year', '</br>',
-                                                    'Rate: ', res_p, "%"))
+                                                    'Rate: ', res_p, "%"))%>% 
+        add_trace(p, x = res_curr$perct*100, y = res_curr$rate, showlegend = F, 
+                  mode = 'markers', marker = list(symbol = 'square', size = 10, color = "#000000"), 
+                  hoverinfo= 'text', text = ~paste0('Percentile: ', round(res_curr$perct*100,3), '</br></br>', 
+                                                    'Latest Date: ', curr_point()$Date, '</br>',
+                                                    'Duration: 1-Month', '</br>',
+                                                    'Rate: ', round(res_curr$rate,3), "%"))
       p %>% layout(title = "10-Year Treasury Rates",
                    legend = list(orientation = "h", xanchor = "center", x = 0.5, font = list(size = 15)), 
                    font = list(size = 12), 
                    xaxis = list(title = "Percentile", showgrid = FALSE, size = 8, tickangle = 0),
-                   yaxis = list(title = "Treasury Rates", size = 8, tickangle = 0))%>% 
+                   yaxis = list(title = "Treasury Rates", size = 8, tickangle = 0), 
+                   annotations = list(x = res_curr$perct*100, y = res_curr$rate, text = curr_point()$Date, 
+                                      xref = "x", yref = "y", showarrow = TRUE, arrowhead = 7, ax = 20, ay = -40))%>% 
         config(displaylogo = FALSE, modeBarButtonsToRemove = list("zoomIn2d", "zoomOut2d", "zoom2d", "autoScale2d", "resetScale2d", "select2d", 
                                                                   "hoverClosestCartesian", "hoverCompareCartesian", "lasso2d", "pan2d"))
     })
@@ -526,7 +604,9 @@ server <- function(session, input, output) {
       pdiff_total <- treasury_long2[my_k+1,]$percentile - treasury_long2[my_k,]$percentile
       pdiff <- input$inputPercentile6/100 - treasury_long2[my_k,]$percentile
       res_p <- pdiff/pdiff_total*as.numeric(treasury_long2[my_k+1,]$value) + (1-pdiff/pdiff_total)*as.numeric(treasury_long2[my_k,]$value)
-      
+      #most recent point 
+      curr = as.numeric(as.character(curr_point()[,"X30.Yr"])) #current point despite chosen time range
+      res_curr <- find_seqcurr(curr, treasury_long2)
       #get the circular points for general percentiles 
       res_ps <- find_seqpercentiles(treasury_long2)
       
@@ -542,15 +622,23 @@ server <- function(session, input, output) {
                                  'Rate: ', rate, "%")) %>% 
         add_trace(p, x = input$inputPercentile6, y = res_p, 
                   showlegend = F, 
-                  mode = 'markers', marker = list(symbol = 'square', size = 8, color = "#000000"), 
+                  mode = 'markers', marker = list(symbol = 'circle', size = 10, color = "#aaaaaa"), 
                   hoverinfo= 'text', text = ~paste0('Percentile: ', input$inputPercentile6, '</br></br>', 
                                                     'Duration: 30-Year', '</br>',
-                                                    'Rate: ', res_p, "%"))
+                                                    'Rate: ', res_p, "%")) %>% 
+        add_trace(p, x = res_curr$perct*100, y = res_curr$rate, showlegend = F, 
+                  mode = 'markers', marker = list(symbol = 'square', size = 10, color = "#000000"), 
+                  hoverinfo= 'text', text = ~paste0('Percentile: ', round(res_curr$perct*100,3), '</br></br>', 
+                                                    'Latest Date: ', curr_point()$Date, '</br>',
+                                                    'Duration: 1-Month', '</br>',
+                                                    'Rate: ', round(res_curr$rate,3), "%"))
       p %>% layout(title = "30-Year Treasury Rates",
                    legend = list(orientation = "h", xanchor = "center", x = 0.5, font = list(size = 15)), 
                    font = list(size = 12), 
                    xaxis = list(title = "Percentile", showgrid = FALSE, size = 8, tickangle = 0),
-                   yaxis = list(title = "Treasury Rates", size = 8, tickangle = 0))%>% 
+                   yaxis = list(title = "Treasury Rates", size = 8, tickangle = 0), 
+                   annotations = list(x = res_curr$perct*100, y = res_curr$rate, text = curr_point()$Date, 
+                                      xref = "x", yref = "y", showarrow = TRUE, arrowhead = 7, ax = 20, ay = -40))%>%  
         config(displaylogo = FALSE, modeBarButtonsToRemove = list("zoomIn2d", "zoomOut2d", "zoom2d", "autoScale2d", "resetScale2d", "select2d", 
                                                                   "hoverClosestCartesian", "hoverCompareCartesian", "lasso2d", "pan2d"))
     })
