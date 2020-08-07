@@ -129,65 +129,88 @@ ui <- fluidPage(
                 column(width = 12,
                      fluidRow(HTML("<h3>Input Percentile for Treasury Rates of Select Durations</h3>"),
                           wellPanel(fluidRow(
-                                    column(width = 12, 
-                                         column(width = 12, 
-                                                sliderInput("percentileTime", "Select Time Interval", min = 2010, max = 2020, 
-                                                            value = c(2010, 2020), step = 1, sep = ""))
+                                      column(width = 12, 
+                                           column(width = 12, 
+                                                  sliderInput("percentileTime", "Select Time Interval", min = 2010, max = 2020, 
+                                                              value = c(2010, 2020), step = 1, sep = ""))
+                                      )
+                                    ), HTML("<br>"),
+                                    tags$head(
+                                      tags$style(
+                                        HTML('
+                                              .col-sm-6 {
+                                                  width: 45%;
+                                              }
+                                              ')
+                                      )
                                     ),
-                                    column(width = 12, 
-                                         column(width = 2, numericInput("inputPercentile1", label = "Input Percentile (1-Month)", 
-                                                                        value = 50, min = 1, max = 100, step = 1)),
-                                         column(width = 2, numericInput("inputPercentile2", label = "Input Percentile (6-Month)", 
-                                                                        value = 50, min = 1, max = 100, step = 1)), 
-                                         column(width = 2, numericInput("inputPercentile3", label = "Input Percentile (1-Year)", 
-                                                                        value = 50, min = 1, max = 100, step = 1)), 
-                                         column(width = 2, numericInput("inputPercentile4", label = "Input Percentile (5-Year)", 
-                                                                        value = 50, min = 1, max = 100, step = 1)), 
-                                         column(width = 2, numericInput("inputPercentile5", label = "Input Percentile (10-Year)", 
-                                                                        value = 50, min = 1, max = 100, step = 1)), 
-                                         column(width = 2, numericInput("inputPercentile6", label = "Input Percentile (30-Year)", 
-                                                                        value = 50, min = 1, max = 100, step = 1))
-                                    ), 
-                                    column(width = 12, 
-                                         column(width = 2, div(
-                                          #tags$b("Treasury Rate"),
-                                           htmlOutput("outputPercentile1", container = pre)
-                                         )),
-                                         column(width = 2, htmlOutput("outputPercentile2", container = pre)),
-                                         column(width = 2, htmlOutput("outputPercentile3", container = pre)),
-                                         column(width = 2, htmlOutput("outputPercentile4", container = pre)),
-                                         column(width = 2, htmlOutput("outputPercentile5", container = pre)),
-                                         column(width = 2, htmlOutput("outputPercentile6", container = pre))
-                                    )
-                                ), hr(),
-                                fluidRow(
-                                column(width = 12, 
-                                       column(width = 2, numericInput("inputRate1", label = "Input Rate (1-Month)", 
-                                                                      value = 0.25, min = 0, max = 5, step = 0.01)),
-                                       column(width = 2, numericInput("inputRate2", label = "Input Rate (6-Month)", 
-                                                                      value = 0.5, min = 0, max = 5, step = 0.01)), 
-                                       column(width = 2, numericInput("inputRate3", label = "Input Rate (1-Year)", 
-                                                                      value = 1, min = 0, max = 5, step = 0.01)), 
-                                       column(width = 2, numericInput("inputRate4", label = "Input Rate (5-Year)", 
-                                                                      value = 1.25, min = 0, max = 5, step = 0.01)), 
-                                       column(width = 2, numericInput("inputRate5", label = "Input Rate (10-Year)", 
-                                                                      value = 1.5, min = 0, max = 5, step = 0.01)), 
-                                       column(width = 2, numericInput("inputRate6", label = "Input Rate (30-Year)", 
-                                                                      value = 2, min = 0, max = 5, step = 0.01))
-                                ), 
-                                column(width = 12, 
-                                       column(width = 2, div(
-                                         #tags$b("Treasury Rate"),
-                                         htmlOutput("outputRate1", container = pre)
-                                       )),
-                                       column(width = 2, htmlOutput("outputRate2", container = pre)),
-                                       column(width = 2, htmlOutput("outputRate3", container = pre)),
-                                       column(width = 2, htmlOutput("outputRate4", container = pre)),
-                                       column(width = 2, htmlOutput("outputRate5", container = pre)),
-                                       column(width = 2, htmlOutput("outputRate6", container = pre))
-                                )
-                            )
-                         )
+                                    fluidRow(column(width = 12,
+                                      fluidRow(column(width = 6,
+                                        fluidRow(HTML("&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp <b> Input Percentiles of Interest (in %)</b><br></br>"),
+                                        column(width = 12, 
+                                             column(width = 2, numericInput("inputPercentile1", label = "1-Month", 
+                                                                            value = 50, min = 1, max = 100, step = 1)),
+                                             column(width = 2, numericInput("inputPercentile2", label = "6-Month", 
+                                                                            value = 50, min = 1, max = 100, step = 1)), 
+                                             column(width = 2, numericInput("inputPercentile3", label = "1-Year", 
+                                                                            value = 50, min = 1, max = 100, step = 1)), 
+                                             column(width = 2, numericInput("inputPercentile4", label = "5-Year", 
+                                                                            value = 50, min = 1, max = 100, step = 1)), 
+                                             column(width = 2, numericInput("inputPercentile5", label = "10-Year", 
+                                                                            value = 50, min = 1, max = 100, step = 1)), 
+                                             column(width = 2, numericInput("inputPercentile6", label = "30-Year", 
+                                                                            value = 50, min = 1, max = 100, step = 1))
+                                        )
+                                      ), 
+                                      fluidRow(HTML("&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp Rates for Input Percentiles <br></br>"),
+                                      column(width = 12, 
+                                           column(width = 2, div(
+                                            #tags$b("Treasury Rate"),
+                                             htmlOutput("outputPercentile1", container = pre)
+                                           )),
+                                           column(width = 2, htmlOutput("outputPercentile2", container = pre)),
+                                           column(width = 2, htmlOutput("outputPercentile3", container = pre)),
+                                           column(width = 2, htmlOutput("outputPercentile4", container = pre)),
+                                           column(width = 2, htmlOutput("outputPercentile5", container = pre)),
+                                           column(width = 2, htmlOutput("outputPercentile6", container = pre))
+                                        ) 
+                                      ),style='margin-bottom:5px;border:2px solid;border-radius:5px;padding: 10px; 
+                                                border-color:#DCDCDC; border-spacing: 2px;'), 
+                                
+                                    fluidRow(column(width = 6,
+                                       fluidRow( HTML("&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp <b> Input Treasury Rate of Interest (in %)</b><br></br>"),
+                                       column(width = 12, 
+                                              column(width = 2, numericInput("inputRate1", label = "1-Month", 
+                                                                              value = 0.25, min = 0, max = 5, step = 0.01)),
+                                              column(width = 2, numericInput("inputRate2", label = "6-Month", 
+                                                                              value = 0.5, min = 0, max = 5, step = 0.01)), 
+                                              column(width = 2, numericInput("inputRate3", label = "1-Year", 
+                                                                              value = 1, min = 0, max = 5, step = 0.01)), 
+                                              column(width = 2, numericInput("inputRate4", label = "5-Year", 
+                                                                              value = 1.25, min = 0, max = 5, step = 0.01)), 
+                                              column(width = 2, numericInput("inputRate5", label = "10-Year", 
+                                                                              value = 1.5, min = 0, max = 5, step = 0.01)), 
+                                              column(width = 2, numericInput("inputRate6", label = "30-Year", 
+                                                                              value = 2, min = 0, max = 5, step = 0.01))
+                                        )
+                                      ),  
+                                      fluidRow( HTML("&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp Percentiles for Input Treasury Rates <br></br>"),
+                                      column(width = 12, 
+                                             column(width = 2, div(
+                                               #tags$b("Treasury Rate"),
+                                               htmlOutput("outputRate1", container = pre)
+                                             )),
+                                             column(width = 2, htmlOutput("outputRate2", container = pre)),
+                                             column(width = 2, htmlOutput("outputRate3", container = pre)),
+                                             column(width = 2, htmlOutput("outputRate4", container = pre)),
+                                             column(width = 2, htmlOutput("outputRate5", container = pre)),
+                                             column(width = 2, htmlOutput("outputRate6", container = pre))
+                                        )
+                                      ), style='.small-box margin: 0px;border:2px solid;border-radius:5px;padding: 10px; 
+                                                border-color:#DCDCDC; border-spacing: 2px; margin-left:5px')
+                                   
+                                  ))
+                                 )))
                      )
                 )
             ), 
@@ -240,7 +263,10 @@ ui <- fluidPage(
           tags$style(type = 'text/css', 
                      HTML('.navbar-default .navbar-nav > .active >a:hover {color: #555;}
                                  .navbar-default .navbar-nav > .active >a {color: #047cdc;}
-                                 .navbar-default .navbar-nav > .active >a:focus {color: #047cdc}')
+                                 .navbar-default .navbar-nav > .active >a:focus {color: #047cdc}
+                          .column_w_bar {border-right-color: #eb4034;
+                                         border-right-width: 1px;
+                                         border-right-style: solid;}')
           )
        )
     #)
