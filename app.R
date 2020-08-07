@@ -186,13 +186,12 @@ ui <- fluidPage(
                                        column(width = 2, htmlOutput("outputRate5", container = pre)),
                                        column(width = 2, htmlOutput("outputRate6", container = pre))
                                 )
-                                , hr()
                             )
                          )
                      )
                 )
             ), 
-            fluidRow(column(width = 12, withSpinner(plotlyOutput("plotRate1", height = 500)))), hr(),
+            fluidRow(column(width = 12, withSpinner(plotlyOutput("plotRate1", height = 650)))), hr(),
             fluidRow(tags$label("Short Durations"),
                      column(width = 12, 
                          column(width = 4, 
@@ -214,7 +213,7 @@ ui <- fluidPage(
                            
                            
                     )
-                )
+                ), hr()
             
         ),
         #navbarMenu("More", icon = icon("info-circle"),
@@ -398,28 +397,26 @@ server <- function(session, input, output) {
         res_curall$name <- factor(res_curall$name, levels = c("1-Month", "6-Month", "1-Year", "5-Year", "10-Year", "30-Year"))
         
         #update the output that shows percentile
-        output$outputRate1 <- renderText({ paste("<font color=\"#000000\"><b>", round(res_curr1$perct, 3), "%", "</b>") })
-        output$outputRate2 <- renderText({ paste("<font color=\"#000000\"><b>", round(res_curr2$perct, 3), "%", "</b>") })
-        output$outputRate3 <- renderText({ paste("<font color=\"#000000\"><b>", round(res_curr3$perct, 3), "%", "</b>") })
-        output$outputRate4 <- renderText({ paste("<font color=\"#000000\"><b>", round(res_curr4$perct, 3), "%", "</b>") })
-        output$outputRate5 <- renderText({ paste("<font color=\"#000000\"><b>", round(res_curr5$perct, 3), "%", "</b>") })
-        output$outputRate6 <- renderText({ paste("<font color=\"#000000\"><b>", round(res_curr6$perct, 3), "%", "</b>") })
+        output$outputRate1 <- renderText({ paste("<font color=\"#000000\"><b>", round(res_curr1$perct, 3)*100,  "</b>") })
+        output$outputRate2 <- renderText({ paste("<font color=\"#000000\"><b>", round(res_curr2$perct, 3)*100,  "</b>") })
+        output$outputRate3 <- renderText({ paste("<font color=\"#000000\"><b>", round(res_curr3$perct, 3)*100,  "</b>") })
+        output$outputRate4 <- renderText({ paste("<font color=\"#000000\"><b>", round(res_curr4$perct, 3)*100,  "</b>") })
+        output$outputRate5 <- renderText({ paste("<font color=\"#000000\"><b>", round(res_curr5$perct, 3)*100,  "</b>") })
+        output$outputRate6 <- renderText({ paste("<font color=\"#000000\"><b>", round(res_curr6$perct, 3)*100,  "</b>") })
         
         ###plot the graph
-        #fig <- plot_ly()
-        #fig <- fig %>% add_lines(x = ~res_curall$name, y = ~res_curall$rate, name = "Chosen Treasury Rates")
-        #fig <- fig %>% add_lines(x = ~res_curall$name, y = ~res_curall$perct, name = "Percentiles of Chosen Treasury Rates")
-        #fig <- fig %>% layout(title = "Input Rates for Select Durations", 
-        #                      xaxis = list(title= ""), yaxis = list(title = "Treasury Rates"), 
-        #                      yaxis2 = list(tickfont = list(color = 'black'), overlaying = "y", side = "right", title = "Percentiles"),
-        #                      legend = list(orientation = "h", xanchor = "center", x = 0.5, font = list(size = 15)))
-        plot_ly(res_curall, x = ~name, y = ~rate, type = "scatter", mode = 'markers+lines', name = "Chosen Treasury Rates") %>%
-          add_trace(x = ~name, y = ~perct, mode = "markers+lines", name = "Percentiles of Chosen Treasury Rates") %>% 
-          layout(yaxis2 = list(tickfont = list(color = 'red'), overlaying = "y", side = "right")) %>% 
+        plot_ly(res_curall, x = ~name, y = ~rate, type = "scatter", mode = 'markers+lines', name = "Chosen Treasury Rates",
+                hoverinfo= 'text', text = ~paste0('Rate: ', round(rate,3), "%", '</br></br>', 
+                                                  'Duration: ', name, '</br>')) %>%
+          add_trace(x = ~name, y = ~perct, mode = "markers+lines", name = "Percentiles of Chosen Treasury Rates", yaxis = "y2",
+                    hoverinfo= 'text', text = ~paste0('Percentile: ', round(perct,3)*100, '</br></br>', 
+                                                      'Duration: ', name, '</br>')) %>% 
+          layout(yaxis2 = list(tickfont = list(color = 'black'), overlaying = "y", side = "right")) %>% 
           layout(title = "Input Rates for Select Durations", 
                  xaxis = list(title= ""), yaxis = list(title = "Treasury Rates"), 
-                 yaxis2 = list(tickfont = list(color = 'red'), overlaying = "y", side = "right", title = "Percentiles"),
-                 legend = list(orientation = "h", xanchor = "center", x = 0.5, font = list(size = 15))) %>% 
+                 yaxis2 = list(showline = FALSE, color = "black", overlaying = "y", side = "right", title = "Percentiles (100th)"),
+                 legend = list(orientation = "h", xanchor = "center", x = 0.5, font = list(size = 15)),
+                 margin = m <- list(r = 50)) %>% 
           config(displaylogo = FALSE, modeBarButtonsToRemove = list("zoomIn2d", "zoomOut2d", "zoom2d", "autoScale2d", "resetScale2d", "select2d", 
                                                                     "hoverClosestCartesian", "hoverCompareCartesian", "lasso2d", "pan2d"))
 
@@ -454,11 +451,11 @@ server <- function(session, input, output) {
                           hoverinfo= 'text', 
                           text = ~paste0('Percentile: ', perct, '</br></br>', 
                                         'Duration: 1-Month', '</br>',
-                                        'Rate: ', rate, "%")) %>% 
+                                        'Rate: ', round(as.numeric(as.character(rate)),3), "%")) %>% 
                 add_trace(p, x = res_currp$perct, y = res_currp$rate, 
                           showlegend = F, 
                           mode = 'markers', marker = list(symbol = 'circle', size = 10, color = "#aaaaaa"), 
-                          hoverinfo= 'text', text = ~paste0('Percentile: ', round(res_currp$perct*100,3), '</br></br>', 
+                          hoverinfo= 'text', text = ~paste0('Percentile: ', round(res_currp$perct,3), '</br></br>', 
                                                             'Duration: 1-Month', '</br>',
                                                             'Rate: ', round(res_currp$rate, 3), "%")) %>% 
                 add_trace(p, x = res_curr$perct*100, y = res_curr$rate, showlegend = F, 
@@ -508,11 +505,11 @@ server <- function(session, input, output) {
                   hoverinfo= 'text', 
                   text = ~paste0('Percentile: ', perct, '</br></br>', 
                                  'Duration: 6-Month', '</br>',
-                                 'Rate: ', rate, "%")) %>% 
+                                 'Rate: ', round(as.numeric(as.character(rate)),3), "%")) %>% 
         add_trace(p, x = res_currp$perct, y = res_currp$rate, 
                   showlegend = F, 
                   mode = 'markers', marker = list(symbol = 'circle', size = 10, color = "#aaaaaa"), 
-                  hoverinfo= 'text', text = ~paste0('Percentile: ', round(res_currp$perct*100,3), '</br></br>', 
+                  hoverinfo= 'text', text = ~paste0('Percentile: ', round(res_currp$perct,3), '</br></br>', 
                                                     'Duration: 6-Month', '</br>',
                                                     'Rate: ', round(res_currp$rate, 3), "%")) %>% 
         add_trace(p, x = res_curr$perct*100, y = res_curr$rate, showlegend = F, 
@@ -562,11 +559,11 @@ server <- function(session, input, output) {
                   hoverinfo= 'text', 
                   text = ~paste0('Percentile: ', perct, '</br></br>', 
                                  'Duration: 1-Year', '</br>',
-                                 'Rate: ', rate, "%")) %>% 
+                                 'Rate: ', round(as.numeric(as.character(rate)),3), "%")) %>% 
         add_trace(p, x = res_currp$perct, y = res_currp$rate, 
                   showlegend = F, 
                   mode = 'markers', marker = list(symbol = 'circle', size = 10, color = "#aaaaaa"), 
-                  hoverinfo= 'text', text = ~paste0('Percentile: ', round(res_currp$perct*100,3), '</br></br>', 
+                  hoverinfo= 'text', text = ~paste0('Percentile: ', round(res_currp$perct,3), '</br></br>', 
                                                     'Duration: 1-Year', '</br>',
                                                     'Rate: ', round(res_currp$rate, 3), "%")) %>% 
         add_trace(p, x = res_curr$perct*100, y = res_curr$rate, showlegend = F, 
@@ -614,11 +611,11 @@ server <- function(session, input, output) {
                   hoverinfo= 'text', 
                   text = ~paste0('Percentile: ', perct, '</br></br>', 
                                  'Duration: 5-Year', '</br>',
-                                 'Rate: ', rate, "%")) %>% 
+                                 'Rate: ', round(as.numeric(as.character(rate)),3), "%")) %>% 
         add_trace(p, x = res_currp$perct, y = res_currp$rate, 
                   showlegend = F, 
                   mode = 'markers', marker = list(symbol = 'circle', size = 10, color = "#aaaaaa"), 
-                  hoverinfo= 'text', text = ~paste0('Percentile: ', round(res_currp$perct*100,3), '</br></br>', 
+                  hoverinfo= 'text', text = ~paste0('Percentile: ', round(res_currp$perct,3), '</br></br>', 
                                                     'Duration: 5-Year', '</br>',
                                                     'Rate: ', round(res_currp$rate, 3), "%")) %>% 
         add_trace(p, x = res_curr$perct*100, y = res_curr$rate, showlegend = F, 
@@ -667,11 +664,11 @@ server <- function(session, input, output) {
                   hoverinfo= 'text', 
                   text = ~paste0('Percentile: ', perct, '</br></br>', 
                                  'Duration: 10-Year', '</br>',
-                                 'Rate: ', rate, "%")) %>% 
+                                 'Rate: ', round(as.numeric(as.character(rate)),3), "%")) %>% 
         add_trace(p, x = res_currp$perct, y = res_currp$rate, 
                   showlegend = F, 
                   mode = 'markers', marker = list(symbol = 'circle', size = 10, color = "#aaaaaa"), 
-                  hoverinfo= 'text', text = ~paste0('Percentile: ', round(res_currp$perct*100,3), '</br></br>', 
+                  hoverinfo= 'text', text = ~paste0('Percentile: ', round(res_currp$perct,3), '</br></br>', 
                                                     'Duration: 10-Year', '</br>',
                                                     'Rate: ', round(res_currp$rate, 3), "%")) %>% 
         add_trace(p, x = res_curr$perct*100, y = res_curr$rate, showlegend = F,  
@@ -719,11 +716,11 @@ server <- function(session, input, output) {
                   hoverinfo= 'text', 
                   text = ~paste0('Percentile: ', perct, '</br></br>', 
                                  'Duration: 30-Year', '</br>',
-                                 'Rate: ', rate, "%")) %>% 
+                                 'Rate: ', round(as.numeric(as.character(rate)),3), "%")) %>% 
         add_trace(p, x = res_currp$perct, y = res_currp$rate, 
                   showlegend = F, 
                   mode = 'markers', marker = list(symbol = 'circle', size = 10, color = "#aaaaaa"), 
-                  hoverinfo= 'text', text = ~paste0('Percentile: ', round(res_currp$perct*100,3), '</br></br>', 
+                  hoverinfo= 'text', text = ~paste0('Percentile: ', round(res_currp$perct,3), '</br></br>', 
                                                     'Duration: 30-Year', '</br>',
                                                     'Rate: ', round(res_currp$rate, 3), "%")) %>% 
         add_trace(p, x = res_curr$perct*100, y = res_curr$rate, showlegend = F,  
