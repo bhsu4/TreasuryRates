@@ -76,54 +76,6 @@ ui <- fluidPage(
     navbarPage(title=div(img(src="symetra-logo.png", style="margin-top: -12px; 
                              margin-left: -10px; padding-bottom: 10px", height = 50)),
                windowTitle="Treasure Hunt", theme = shinytheme("simplex"),
-        tabPanel(HTML("Historical Treasury Yields"), fluid = TRUE, icon = icon("chart-line"),
-            # Sidebar layout with a input and output definitions
-            sidebarLayout(
-                sidebarPanel(width = 3,
-                   titlePanel(HTML("<h3>Choose Parameters</h3></br>")), 
-                       fluidRow(column(width = 12,
-                            tags$label("Select Duration"), 
-                            fluidRow(
-                                column(width = 4, 
-                                       checkboxGroupInput(inputId = "historicalDurationA", 
-                                                          label = NULL, 
-                                                          choices = c("1-Month" = "X1.Mo", "6-Month" = "X6.Mo"),
-                                                          selected = "X1.Mo"
-                                       )
-                                ),
-                                column(width = 4, 
-                                       checkboxGroupInput(inputId = "historicalDurationB", 
-                                                          label = NULL, 
-                                                          choices = c("1-Year" = "X1.Yr", "5-Year" = "X5.Yr")
-                                       )
-                                ),
-                                column(width = 4, 
-                                       checkboxGroupInput(inputId = "historicalDurationC", 
-                                                          label = NULL, 
-                                                          choices = c("10-Year" = "X10.Yr", "30-Year" = "X30.Yr")
-                                       )
-                                )
-                            ), hr(),
-                            sliderInput(inputId = "historicalYear",
-                                        label = "Select Years",
-                                        min = 2010, max = 2020,
-                                        value = c(2010,2020), sep = ""),
-                            helpText(HTML("<p style = 'text-align: right'>Last update: 6/30/2020</p>")),
-                            hr())#, 
-                            #tags$label("Input Percentile for Selected Duration(s)"),
-                            #wellPanel(fluidRow(align = "center", uiOutput("inputPercentile"))
-                            #), hr())
-                       )
-                ),
-                mainPanel(
-                    fluidRow(
-                        column(width = 12, 
-                            withSpinner(plotlyOutput(outputId = "historicalLP", height = 600))
-                        )
-                    ), hr()
-                )
-            )
-        ),
         tabPanel(HTML("Percentile of Treasury Yields"), fluid = TRUE, icon = icon("percent"),
             fluidRow(
                 column(width = 12,
@@ -135,17 +87,10 @@ ui <- fluidPage(
                                                               value = c(2010, 2020), step = 1, sep = ""))
                                       )
                                     ), HTML("<br>"),
-                                    tags$head(
-                                      tags$style(
-                                        HTML('
-                                              .col-sm-6 {
-                                                  width: 45%;
-                                              }
-                                              ')
-                                      )
-                                    ),
+                                   
+                                    
                                     fluidRow(column(width = 12,
-                                      fluidRow(column(width = 6,
+                                      fluidRow(column(width = 9,
                                         fluidRow(HTML("&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp <b> Input Percentiles of Interest (in %)</b><br></br>"),
                                         column(width = 12, 
                                              column(width = 2, numericInput("inputPercentile1", label = "1-Month", 
@@ -175,42 +120,73 @@ ui <- fluidPage(
                                            column(width = 2, htmlOutput("outputPercentile6", container = pre))
                                         ) 
                                       ),style='margin-bottom:5px;border:2px solid;border-radius:5px;padding: 10px; 
-                                                border-color:#DCDCDC; border-spacing: 2px;'), 
+                                                border-color:#DCDCDC; border-spacing: 2px;margin-left:25px; font-size:12px'), 
+                                      fluidRow(column(width = 2,
+                                                      fluidRow( HTML("&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp <b> Weighted Index </b><br></br>"),
+                                                                column(width = 12, tags$label(style = 'display;table-cell; vertical-align:middle; margin-left: 15px;', "Weighted Percentiles"),
+                                                                       column(width = 12, htmlOutput("outputPercentileWeight", container = pre))
+                                                                )
+                                                      ), HTML("</br>"),
+                                                      fluidRow( tags$label(style = 'display;table-cell; vertical-align:middle; margin-left: 30px;', "Index at Weighted Percentile"),
+                                                                column(width = 12, 
+                                                                       column(width = 12, htmlOutput("outputPercentileWeightR", container = pre))
+                                                                )
+                                                      ), style='.small-box margin: 0px;border:2px solid;border-radius:5px;padding: 10px; 
+                                                border-color:#DCDCDC; border-spacing: 2px; margin-left:5px; font-size: 12px;'))), hr(),
                                 
-                                    fluidRow(column(width = 6,
+                                    fluidRow(column(width = 9, 
                                        fluidRow( HTML("&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp <b> Input Treasury Rate of Interest (in %)</b><br></br>"),
+                                                 tags$style("[type = 'number'] {font-size:12px;}"),
+                                                 
                                        column(width = 12, 
                                               column(width = 2, numericInput("inputRate1", label = "1-Month", 
-                                                                              value = 0.25, min = 0, max = 5, step = 0.01)),
+                                                                              value = 0.1132, min = 0, max = 5, step = 0.01)),
                                               column(width = 2, numericInput("inputRate2", label = "6-Month", 
-                                                                              value = 0.5, min = 0, max = 5, step = 0.01)), 
+                                                                              value = 0.181, min = 0, max = 5, step = 0.01)), 
                                               column(width = 2, numericInput("inputRate3", label = "1-Year", 
-                                                                              value = 1, min = 0, max = 5, step = 0.01)), 
+                                                                              value = 0.288, min = 0, max = 5, step = 0.01)), 
                                               column(width = 2, numericInput("inputRate4", label = "5-Year", 
-                                                                              value = 1.25, min = 0, max = 5, step = 0.01)), 
+                                                                              value = 1.595, min = 0, max = 5, step = 0.01)), 
                                               column(width = 2, numericInput("inputRate5", label = "10-Year", 
-                                                                              value = 1.5, min = 0, max = 5, step = 0.01)), 
+                                                                              value = 2.311, min = 0, max = 5, step = 0.01)), 
                                               column(width = 2, numericInput("inputRate6", label = "30-Year", 
-                                                                              value = 2, min = 0, max = 5, step = 0.01))
+                                                                              value = 3.02, min = 0, max = 5, step = 0.01)), 
                                         )
+                                      
                                       ),  
                                       fluidRow( HTML("&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp Percentiles for Input Treasury Rates <br></br>"),
                                       column(width = 12, 
-                                             column(width = 2, div(
-                                               #tags$b("Treasury Rate"),
-                                               htmlOutput("outputRate1", container = pre)
-                                             )),
+                                             column(width = 2, htmlOutput("outputRate1", container = pre)),
                                              column(width = 2, htmlOutput("outputRate2", container = pre)),
                                              column(width = 2, htmlOutput("outputRate3", container = pre)),
                                              column(width = 2, htmlOutput("outputRate4", container = pre)),
                                              column(width = 2, htmlOutput("outputRate5", container = pre)),
-                                             column(width = 2, htmlOutput("outputRate6", container = pre))
-                                        )
+                                             column(width = 2, htmlOutput("outputRate6", container = pre)),
+                                        ), 
+                                    
                                       ), style='.small-box margin: 0px;border:2px solid;border-radius:5px;padding: 10px; 
-                                                border-color:#DCDCDC; border-spacing: 2px; margin-left:5px')
-                                   
+                                                border-color:#DCDCDC; border-spacing: 2px; margin-left:25px; font-size: 12px;'), 
+                                      
+                                      fluidRow(column(width = 2,
+                                          fluidRow( HTML("&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp <b> Weighted Index </b><br></br>"),
+                                              column(width = 12, tags$label(style = 'display;table-cell; vertical-align:middle; margin-left: 15px;', "Weighted Rate"),
+                                                     column(width = 12, htmlOutput("outputRateWeight", container = pre))
+                                              )
+                                          ), HTML("</br>"),
+                                          fluidRow( tags$label(style = 'display;table-cell; vertical-align:middle; margin-left: 30px;', "Percentile at Weighted Rate"),
+                                                    column(width = 12, 
+                                                           column(width = 12, htmlOutput("outputRateWeightP", container = pre))
+                                                    )
+                                          ), style='.small-box margin: 0px;border:2px solid;border-radius:5px;padding: 10px; 
+                                                border-color:#DCDCDC; border-spacing: 2px; margin-left:5px; font-size: 12px;'))
                                   ))
-                                 )))
+                                    
+                                    )
+                                  
+                                  
+                           
+                           
+                           ) #wellpanel
                      )
                 )
             ), 
@@ -238,6 +214,54 @@ ui <- fluidPage(
                     )
                 ), hr()
             
+        ),
+        tabPanel(HTML("Historical Treasury Yields"), fluid = TRUE, icon = icon("chart-line"),
+             # Sidebar layout with a input and output definitions
+             sidebarLayout(
+               sidebarPanel(width = 3,
+                            titlePanel(HTML("<h3>Choose Parameters</h3></br>")), 
+                            fluidRow(column(width = 12,
+                                            tags$label("Select Duration"), 
+                                            fluidRow(
+                                              column(width = 4, 
+                                                     checkboxGroupInput(inputId = "historicalDurationA", 
+                                                                        label = NULL, 
+                                                                        choices = c("1-Month" = "X1.Mo", "6-Month" = "X6.Mo"),
+                                                                        selected = "X1.Mo"
+                                                     )
+                                              ),
+                                              column(width = 4, 
+                                                     checkboxGroupInput(inputId = "historicalDurationB", 
+                                                                        label = NULL, 
+                                                                        choices = c("1-Year" = "X1.Yr", "5-Year" = "X5.Yr")
+                                                     )
+                                              ),
+                                              column(width = 4, 
+                                                     checkboxGroupInput(inputId = "historicalDurationC", 
+                                                                        label = NULL, 
+                                                                        choices = c("10-Year" = "X10.Yr", "30-Year" = "X30.Yr")
+                                                     )
+                                              )
+                                            ), hr(),
+                                            sliderInput(inputId = "historicalYear",
+                                                        label = "Select Years",
+                                                        min = 2010, max = 2020,
+                                                        value = c(2010,2020), sep = ""),
+                                            helpText(HTML("<p style = 'text-align: right'>Last update: 6/30/2020</p>")),
+                                            hr())#, 
+                                     #tags$label("Input Percentile for Selected Duration(s)"),
+                                     #wellPanel(fluidRow(align = "center", uiOutput("inputPercentile"))
+                                     #), hr())
+                            )
+               ),
+               mainPanel(
+                 fluidRow(
+                   column(width = 12, 
+                          withSpinner(plotlyOutput(outputId = "historicalLP", height = 850))
+                   )
+                 ), hr()
+               )
+             )
         ),
         #navbarMenu("More", icon = icon("info-circle"),
             tabPanel("About", fluid = TRUE, icon = icon("info-circle"),
@@ -281,6 +305,10 @@ treasury_time <- function(t1, t2){
     treasury$year <- year(ymd(treasury$Date))
     treasury$month <- month(ymd(treasury$Date))
     treasury$day <- day(ymd(treasury$Date))
+    #change to numeric
+    for(i in 2:13){
+      treasury[,i] <- as.numeric(as.character(treasury[,i]))
+    }
     #choose interval of interest
     return(treasury %>% filter(year >= t1 & year <= t2))
 }
@@ -403,6 +431,17 @@ server <- function(session, input, output) {
         return(current)
     })
     
+    weighted_treasury <- reactive({
+      treasury <- treasury_time(input$percentileTime[1], input$percentileTime[2])
+      treasury <- treasury[,c("Date", "X1.Mo", "X6.Mo", "X1.Yr", "X5.Yr", "X10.Yr", "X30.Yr")]
+      treasury$value <- treasury$X1.Mo*(1/12)+treasury$X6.Mo*(1/2)+treasury$X1.Yr*(1)+
+                              treasury$X5.Yr*(5)+treasury$X10.Yr*(10)+treasury$X30.Yr*(30)
+      treasury_f <- treasury[,c("Date", "value")]
+      treasury_f <- treasury_f[!is.na(treasury_f$value),] %>% arrange(value) %>% 
+                          mutate(count = seq(n()),  percentile = ecdf(value)(value))
+      return(treasury_f)
+    })
+    
     output$plotRate1 <- renderPlotly({
         treasury <- treasury_time(input$percentileTime[1], input$percentileTime[2])
         treasury <- treasury[,c("Date", "X1.Mo", "X6.Mo", "X1.Yr", "X5.Yr", "X10.Yr", "X30.Yr")]
@@ -422,6 +461,14 @@ server <- function(session, input, output) {
         res_curall$name <- c("1-Month", "6-Month", "1-Year", "5-Year", "10-Year", "30-Year")
         res_curall$name <- factor(res_curall$name, levels = c("1-Month", "6-Month", "1-Year", "5-Year", "10-Year", "30-Year"))
         
+        #find percentile for the weighted index 
+        current_index <- sum(res_curall$rate*c(1/12, 1/2, 1, 5, 10, 30))
+        res_indexp <- find_seqcurr(current_index, weighted_treasury())
+        #find rate for weighted percentile 
+        current_indexp <- (input$inputPercentile1*(1/12)+input$inputPercentile2*(1/2)+input$inputPercentile3*(1)
+                              +input$inputPercentile4*(5)+input$inputPercentile5*(10)+input$inputPercentile6*(30))/(46+7/12)
+        res_index <- find_ratecurr(current_indexp, weighted_treasury())
+        
         #update the output that shows percentile
         output$outputRate1 <- renderText({ paste("<font color=\"#000000\"><b>", round(res_curr1$perct, 3)*100,  "</b>") })
         output$outputRate2 <- renderText({ paste("<font color=\"#000000\"><b>", round(res_curr2$perct, 3)*100,  "</b>") })
@@ -429,20 +476,23 @@ server <- function(session, input, output) {
         output$outputRate4 <- renderText({ paste("<font color=\"#000000\"><b>", round(res_curr4$perct, 3)*100,  "</b>") })
         output$outputRate5 <- renderText({ paste("<font color=\"#000000\"><b>", round(res_curr5$perct, 3)*100,  "</b>") })
         output$outputRate6 <- renderText({ paste("<font color=\"#000000\"><b>", round(res_curr6$perct, 3)*100,  "</b>") })
-        
+        output$outputRateWeight <- renderText({ paste("<font color=\"#000000\"><b>", round(res_indexp$rate,3), "</b>") })
+        output$outputRateWeightP <- renderText({ paste("<font color=\"#000000\"><b>", round(res_indexp$perct*100,3), "</b>") })
+        output$outputPercentileWeight <- renderText({ paste("<font color=\"#000000\"><b>", round(res_index$perct,3), "</b>") })
+        output$outputPercentileWeightR <- renderText({ paste("<font color=\"#000000\"><b>", round(res_index$rate,3), "</b>") })
         ###plot the graph
         plot_ly(res_curall, x = ~name, y = ~rate, type = "scatter", mode = 'markers+lines', name = "Chosen Treasury Rates",
                 hoverinfo= 'text', text = ~paste0('Rate: ', round(rate,3), "%", '</br></br>', 
                                                   'Duration: ', name, '</br>')) %>%
           add_trace(x = ~name, y = ~perct, mode = "markers+lines", name = "Percentiles of Chosen Treasury Rates", yaxis = "y2",
-                    hoverinfo= 'text', text = ~paste0('Percentile: ', round(perct,3)*100, '</br></br>', 
+                    hoverinfo= 'text', line = list(dash = "dash"), text = ~paste0('Percentile: ', round(perct,3)*100, '</br></br>', 
                                                       'Duration: ', name, '</br>')) %>% 
           layout(yaxis2 = list(tickfont = list(color = 'black'), overlaying = "y", side = "right")) %>% 
           layout(title = "Input Rates for Select Durations", 
                  xaxis = list(title= ""), yaxis = list(title = "Treasury Rates"), 
                  yaxis2 = list(showline = FALSE, color = "black", overlaying = "y", side = "right", title = "Percentiles (100th)"),
                  legend = list(orientation = "h", xanchor = "center", x = 0.5, font = list(size = 15)),
-                 margin = m <- list(r = 50)) %>% 
+                 margin = m <- list(r = 80)) %>% 
           config(displaylogo = FALSE, modeBarButtonsToRemove = list("zoomIn2d", "zoomOut2d", "zoom2d", "autoScale2d", "resetScale2d", "select2d", 
                                                                     "hoverClosestCartesian", "hoverCompareCartesian", "lasso2d", "pan2d"))
 
@@ -466,7 +516,7 @@ server <- function(session, input, output) {
         #get the circular points for general percentiles 
         res_ps <- find_seqpercentiles(treasury_long2) 
         
-        output$outputPercentile1 <- renderText({ paste("<font color=\"#000000\"><b>", round(res_currp$rate, 3), "%", "</b>") })
+        output$outputPercentile1 <- renderText({ paste0("<font color=\"#000000\"><b>", round(res_currp$rate, 3), "%", "</b>") })
         
         p <- plot_ly(data = treasury_long2, 
                         legendgroup = "1-Month", x = ~percentile*100, y = ~value, 
@@ -520,7 +570,7 @@ server <- function(session, input, output) {
       #get the circular points for general percentiles 
       res_ps <- find_seqpercentiles(treasury_long2)
       
-      output$outputPercentile2 <- renderText({ paste("<font color=\"#000000\"><b>", round(res_currp$rate, 3), "%", "</b>") })
+      output$outputPercentile2 <- renderText({ paste0("<font color=\"#000000\"><b>", round(res_currp$rate, 3), "%", "</b>") })
       
       p <- plot_ly(data = treasury_long2, 
                    legendgroup = "6-Month", x = ~percentile*100, y = ~value, 
@@ -574,7 +624,7 @@ server <- function(session, input, output) {
       #get the circular points for general percentiles 
       res_ps <- find_seqpercentiles(treasury_long2)
       
-      output$outputPercentile3 <- renderText({ paste("<font color=\"#000000\"><b>", round(res_currp$rate, 3), "%", "</b>") })
+      output$outputPercentile3 <- renderText({ paste0("<font color=\"#000000\"><b>", round(res_currp$rate, 3), "%", "</b>") })
       
       p <- plot_ly(data = treasury_long2, 
                    legendgroup = "1-Year", x = ~percentile*100, y = ~value, 
@@ -626,7 +676,7 @@ server <- function(session, input, output) {
       #get the circular points for general percentiles 
       res_ps <- find_seqpercentiles(treasury_long2)
       
-      output$outputPercentile4 <- renderText({ paste("<font color=\"#000000\"><b>", round(res_currp$rate, 3), "%", "</b>") })
+      output$outputPercentile4 <- renderText({ paste0("<font color=\"#000000\"><b>", round(res_currp$rate, 3), "%", "</b>") })
       
       p <- plot_ly(data = treasury_long2, 
                    legendgroup = "5-Year", x = ~percentile*100, y = ~value, 
@@ -679,7 +729,7 @@ server <- function(session, input, output) {
       #get the circular points for general percentiles 
       res_ps <- find_seqpercentiles(treasury_long2)
       
-      output$outputPercentile5 <- renderText({ paste("<font color=\"#000000\"><b>", round(res_currp$rate, 3), "%", "</b>") })
+      output$outputPercentile5 <- renderText({ paste0("<font color=\"#000000\"><b>", round(res_currp$rate, 3), "%", "</b>") })
       
       p <- plot_ly(data = treasury_long2, 
                    legendgroup = "10-Year", x = ~percentile*100, y = ~value, 
@@ -731,7 +781,7 @@ server <- function(session, input, output) {
       #get the circular points for general percentiles 
       res_ps <- find_seqpercentiles(treasury_long2)
       
-      output$outputPercentile6 <- renderText({ paste("<font color=\"#000000\"><b>", round(res_currp$rate, 3), "%", "</b>") })
+      output$outputPercentile6 <- renderText({ paste0("<font color=\"#000000\"><b>", round(res_currp$rate, 3), "%", "</b>") })
       
       p <- plot_ly(data = treasury_long2, 
                    legendgroup = "30-Year", x = ~percentile*100, y = ~value, 
