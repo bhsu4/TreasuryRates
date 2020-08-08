@@ -79,107 +79,108 @@ ui <- fluidPage(
         tabPanel(HTML("Percentile of Treasury Yields"), fluid = TRUE, icon = icon("percent"),
             fluidRow(
                 column(width = 12,
-                     fluidRow(HTML("<h3>Input Percentile for Treasury Rates of Select Durations</h3>"),
+                     fluidRow(HTML("<h3>Choose Your Inputs for Select Durations</h3>"),
                           wellPanel(fluidRow(
                                       column(width = 12, 
                                            column(width = 12, 
-                                                  sliderInput("percentileTime", "Select Time Interval", min = 2010, max = 2020, 
-                                                              value = c(2010, 2020), step = 1, sep = ""))
+                                                  sliderInput("percentileTime", "Select Time Interval", min = 1990, max = 2020, 
+                                                              value = c(1990, 2020), step = 1, sep = ""))
                                       )
                                     ), HTML("<br>"),
                                    
                                     
                                     fluidRow(column(width = 12,
-                                      fluidRow(column(width = 9,
-                                        fluidRow(HTML("&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp <b> Input Percentiles of Interest (in %)</b><br></br>"),
-                                        column(width = 12, 
-                                             column(width = 2, numericInput("inputPercentile1", label = "1-Month", 
-                                                                            value = 50, min = 1, max = 100, step = 1)),
-                                             column(width = 2, numericInput("inputPercentile2", label = "6-Month", 
-                                                                            value = 50, min = 1, max = 100, step = 1)), 
-                                             column(width = 2, numericInput("inputPercentile3", label = "1-Year", 
-                                                                            value = 50, min = 1, max = 100, step = 1)), 
-                                             column(width = 2, numericInput("inputPercentile4", label = "5-Year", 
-                                                                            value = 50, min = 1, max = 100, step = 1)), 
-                                             column(width = 2, numericInput("inputPercentile5", label = "10-Year", 
-                                                                            value = 50, min = 1, max = 100, step = 1)), 
-                                             column(width = 2, numericInput("inputPercentile6", label = "30-Year", 
-                                                                            value = 50, min = 1, max = 100, step = 1))
+                                          fluidRow(column(width = 9, 
+                                                fluidRow( HTML("&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp <b> Input Treasury Rate of Interest (in %)</b><br></br>"),
+                                                          tags$style("[type = 'number'] {font-size:12px;}"),
+                                                          
+                                                          column(width = 12, 
+                                                                 column(width = 2, numericInput("inputRate1", label = "1-Month", 
+                                                                                                value = 0.1132, min = 0, max = 5, step = 0.01)),
+                                                                 column(width = 2, numericInput("inputRate2", label = "6-Month", 
+                                                                                                value = 0.181, min = 0, max = 5, step = 0.01)), 
+                                                                 column(width = 2, numericInput("inputRate3", label = "1-Year", 
+                                                                                                value = 0.288, min = 0, max = 5, step = 0.01)), 
+                                                                 column(width = 2, numericInput("inputRate4", label = "5-Year", 
+                                                                                                value = 1.595, min = 0, max = 5, step = 0.01)), 
+                                                                 column(width = 2, numericInput("inputRate5", label = "10-Year", 
+                                                                                                value = 2.311, min = 0, max = 5, step = 0.01)), 
+                                                                 column(width = 2, numericInput("inputRate6", label = "30-Year", 
+                                                                                                value = 3.02, min = 0, max = 5, step = 0.01)), 
+                                                          )
+                                                          
+                                                ),  
+                                                fluidRow( HTML("&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp Percentiles for Input Treasury Rates <br></br>"),
+                                                          column(width = 12, 
+                                                                 column(width = 2, htmlOutput("outputRate1", container = pre)),
+                                                                 column(width = 2, htmlOutput("outputRate2", container = pre)),
+                                                                 column(width = 2, htmlOutput("outputRate3", container = pre)),
+                                                                 column(width = 2, htmlOutput("outputRate4", container = pre)),
+                                                                 column(width = 2, htmlOutput("outputRate5", container = pre)),
+                                                                 column(width = 2, htmlOutput("outputRate6", container = pre)),
+                                                          ), 
+                                                          
+                                                ), style='.small-box margin: 0px;border:2px solid;border-radius:5px;padding: 10px; 
+                                                          border-color:#DCDCDC; border-spacing: 2px; margin-left:50px; font-size: 12px;'), 
+                                         
+                                         fluidRow(column(width = 2,
+                                                         fluidRow( HTML("&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp <b> Weighted Index </b><br></br>"),
+                                                                   column(width = 12, tags$label(style = 'display;table-cell; vertical-align:middle; margin-left: 15px;', "Weighted Rate"),
+                                                                          column(width = 12, htmlOutput("outputRateWeight", container = pre))
+                                                                   )
+                                                         ), HTML("</br>"),
+                                                         fluidRow( tags$label(style = 'display;table-cell; vertical-align:middle; margin-left: 30px;', "Percentile at Weighted Rate"),
+                                                                   column(width = 12, 
+                                                                          column(width = 12, htmlOutput("outputRateWeightP", container = pre))
+                                                                   )
+                                                         ), style='.small-box margin: 0px;border:2px solid;border-radius:5px;padding: 10px; 
+                                                                    border-color:#DCDCDC; border-spacing: 2px; margin-left:5px; font-size: 12px;'))
+                                          ), hr(),
+                                          fluidRow(column(width = 9,
+                                                   fluidRow(HTML("&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp <b> Input Percentiles of Interest</b><br></br>"),
+                                                            column(width = 12, 
+                                                                   column(width = 2, numericInput("inputPercentile1", label = "1-Month", 
+                                                                                                  value = 50, min = 1, max = 100, step = 1)),
+                                                                   column(width = 2, numericInput("inputPercentile2", label = "6-Month", 
+                                                                                                  value = 50, min = 1, max = 100, step = 1)), 
+                                                                   column(width = 2, numericInput("inputPercentile3", label = "1-Year", 
+                                                                                                  value = 50, min = 1, max = 100, step = 1)), 
+                                                                   column(width = 2, numericInput("inputPercentile4", label = "5-Year", 
+                                                                                                  value = 50, min = 1, max = 100, step = 1)), 
+                                                                   column(width = 2, numericInput("inputPercentile5", label = "10-Year", 
+                                                                                                  value = 50, min = 1, max = 100, step = 1)), 
+                                                                   column(width = 2, numericInput("inputPercentile6", label = "30-Year", 
+                                                                                                  value = 50, min = 1, max = 100, step = 1))
+                                                            )
+                                                   ), 
+                                                   fluidRow(HTML("&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp Rates for Input Percentiles <br></br>"),
+                                                            column(width = 12, 
+                                                                   column(width = 2, div(
+                                                                     #tags$b("Treasury Rate"),
+                                                                     htmlOutput("outputPercentile1", container = pre)
+                                                                   )),
+                                                                   column(width = 2, htmlOutput("outputPercentile2", container = pre)),
+                                                                   column(width = 2, htmlOutput("outputPercentile3", container = pre)),
+                                                                   column(width = 2, htmlOutput("outputPercentile4", container = pre)),
+                                                                   column(width = 2, htmlOutput("outputPercentile5", container = pre)),
+                                                                   column(width = 2, htmlOutput("outputPercentile6", container = pre))
+                                                            ) 
+                                                   ),style='margin-bottom:5px;border:2px solid;border-radius:5px;padding: 10px; 
+                                                            border-color:#DCDCDC; border-spacing: 2px;margin-left:50px; font-size:12px'), 
+                                            fluidRow(column(width = 2,
+                                                            fluidRow( HTML("&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp <b> Weighted Index </b><br></br>"),
+                                                                      column(width = 12, tags$label(style = 'display;table-cell; vertical-align:middle; margin-left: 15px;', "Weighted Percentiles"),
+                                                                             column(width = 12, htmlOutput("outputPercentileWeight", container = pre))
+                                                                      )
+                                                            ), HTML("</br>"),
+                                                            fluidRow( tags$label(style = 'display;table-cell; vertical-align:middle; margin-left: 30px;', "Index at Weighted Percentile"),
+                                                                      column(width = 12, 
+                                                                             column(width = 12, htmlOutput("outputPercentileWeightR", container = pre))
+                                                                      )
+                                                            ), style='.small-box margin: 0px;border:2px solid;border-radius:5px;padding: 10px; 
+                                                                      border-color:#DCDCDC; border-spacing: 2px; margin-left:5px; font-size: 12px;')))
+                      
                                         )
-                                      ), 
-                                      fluidRow(HTML("&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp Rates for Input Percentiles <br></br>"),
-                                      column(width = 12, 
-                                           column(width = 2, div(
-                                            #tags$b("Treasury Rate"),
-                                             htmlOutput("outputPercentile1", container = pre)
-                                           )),
-                                           column(width = 2, htmlOutput("outputPercentile2", container = pre)),
-                                           column(width = 2, htmlOutput("outputPercentile3", container = pre)),
-                                           column(width = 2, htmlOutput("outputPercentile4", container = pre)),
-                                           column(width = 2, htmlOutput("outputPercentile5", container = pre)),
-                                           column(width = 2, htmlOutput("outputPercentile6", container = pre))
-                                        ) 
-                                      ),style='margin-bottom:5px;border:2px solid;border-radius:5px;padding: 10px; 
-                                                border-color:#DCDCDC; border-spacing: 2px;margin-left:25px; font-size:12px'), 
-                                      fluidRow(column(width = 2,
-                                                      fluidRow( HTML("&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp <b> Weighted Index </b><br></br>"),
-                                                                column(width = 12, tags$label(style = 'display;table-cell; vertical-align:middle; margin-left: 15px;', "Weighted Percentiles"),
-                                                                       column(width = 12, htmlOutput("outputPercentileWeight", container = pre))
-                                                                )
-                                                      ), HTML("</br>"),
-                                                      fluidRow( tags$label(style = 'display;table-cell; vertical-align:middle; margin-left: 30px;', "Index at Weighted Percentile"),
-                                                                column(width = 12, 
-                                                                       column(width = 12, htmlOutput("outputPercentileWeightR", container = pre))
-                                                                )
-                                                      ), style='.small-box margin: 0px;border:2px solid;border-radius:5px;padding: 10px; 
-                                                border-color:#DCDCDC; border-spacing: 2px; margin-left:5px; font-size: 12px;'))), hr(),
-                                
-                                    fluidRow(column(width = 9, 
-                                       fluidRow( HTML("&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp <b> Input Treasury Rate of Interest (in %)</b><br></br>"),
-                                                 tags$style("[type = 'number'] {font-size:12px;}"),
-                                                 
-                                       column(width = 12, 
-                                              column(width = 2, numericInput("inputRate1", label = "1-Month", 
-                                                                              value = 0.1132, min = 0, max = 5, step = 0.01)),
-                                              column(width = 2, numericInput("inputRate2", label = "6-Month", 
-                                                                              value = 0.181, min = 0, max = 5, step = 0.01)), 
-                                              column(width = 2, numericInput("inputRate3", label = "1-Year", 
-                                                                              value = 0.288, min = 0, max = 5, step = 0.01)), 
-                                              column(width = 2, numericInput("inputRate4", label = "5-Year", 
-                                                                              value = 1.595, min = 0, max = 5, step = 0.01)), 
-                                              column(width = 2, numericInput("inputRate5", label = "10-Year", 
-                                                                              value = 2.311, min = 0, max = 5, step = 0.01)), 
-                                              column(width = 2, numericInput("inputRate6", label = "30-Year", 
-                                                                              value = 3.02, min = 0, max = 5, step = 0.01)), 
-                                        )
-                                      
-                                      ),  
-                                      fluidRow( HTML("&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp Percentiles for Input Treasury Rates <br></br>"),
-                                      column(width = 12, 
-                                             column(width = 2, htmlOutput("outputRate1", container = pre)),
-                                             column(width = 2, htmlOutput("outputRate2", container = pre)),
-                                             column(width = 2, htmlOutput("outputRate3", container = pre)),
-                                             column(width = 2, htmlOutput("outputRate4", container = pre)),
-                                             column(width = 2, htmlOutput("outputRate5", container = pre)),
-                                             column(width = 2, htmlOutput("outputRate6", container = pre)),
-                                        ), 
-                                    
-                                      ), style='.small-box margin: 0px;border:2px solid;border-radius:5px;padding: 10px; 
-                                                border-color:#DCDCDC; border-spacing: 2px; margin-left:25px; font-size: 12px;'), 
-                                      
-                                      fluidRow(column(width = 2,
-                                          fluidRow( HTML("&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp <b> Weighted Index </b><br></br>"),
-                                              column(width = 12, tags$label(style = 'display;table-cell; vertical-align:middle; margin-left: 15px;', "Weighted Rate"),
-                                                     column(width = 12, htmlOutput("outputRateWeight", container = pre))
-                                              )
-                                          ), HTML("</br>"),
-                                          fluidRow( tags$label(style = 'display;table-cell; vertical-align:middle; margin-left: 30px;', "Percentile at Weighted Rate"),
-                                                    column(width = 12, 
-                                                           column(width = 12, htmlOutput("outputRateWeightP", container = pre))
-                                                    )
-                                          ), style='.small-box margin: 0px;border:2px solid;border-radius:5px;padding: 10px; 
-                                                border-color:#DCDCDC; border-spacing: 2px; margin-left:5px; font-size: 12px;'))
-                                  ))
                                     
                                     )
                                   
@@ -245,8 +246,8 @@ ui <- fluidPage(
                                             ), hr(),
                                             sliderInput(inputId = "historicalYear",
                                                         label = "Select Years",
-                                                        min = 2010, max = 2020,
-                                                        value = c(2010,2020), sep = ""),
+                                                        min = 1990, max = 2020,
+                                                        value = c(1990,2020), sep = ""),
                                             helpText(HTML("<p style = 'text-align: right'>Last update: 6/30/2020</p>")),
                                             hr())#, 
                                      #tags$label("Input Percentile for Selected Duration(s)"),
