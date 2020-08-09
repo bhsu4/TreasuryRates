@@ -134,7 +134,7 @@ ui <- fluidPage(
                                                                           column(width = 12, htmlOutput("outputRateWeightP", container = pre))
                                                                    )
                                                          ), style='.small-box margin: 0px;border:2px solid;border-radius:5px;padding: 10px; 
-                                                                    border-color:#DCDCDC; border-spacing: 2px; margin-left:5px; font-size: 12px;'))
+                                                                    border-color:#DCDCDC; border-spacing: 2px; margin-left:10px; font-size: 12px;'))
                                           ), hr(),
                                           fluidRow(column(width = 9,
                                                    fluidRow(HTML("&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp <b> Input Percentiles of Interest</b><br></br>"),
@@ -178,7 +178,7 @@ ui <- fluidPage(
                                                                              column(width = 12, htmlOutput("outputPercentileWeightR", container = pre))
                                                                       )
                                                             ), style='.small-box margin: 0px;border:2px solid;border-radius:5px;padding: 10px; 
-                                                                      border-color:#DCDCDC; border-spacing: 2px; margin-left:5px; font-size: 12px;')))
+                                                                      border-color:#DCDCDC; border-spacing: 2px; margin-left:10px; font-size: 12px;')))
                       
                                         )
                                     
@@ -223,7 +223,9 @@ ui <- fluidPage(
                             titlePanel(HTML("<h3>Choose Parameters</h3></br>")), 
                             fluidRow(column(width = 12,
                                             tags$label("Select Duration"), 
-                                            fluidRow(
+                                            fluidRow(tags$style("#historicalDurationA { font-size:9px;height:50px;}"), 
+                                                     tags$style("#historicalDurationB { font-size:9px;height:50px;}"),
+                                                     tags$style("#historicalDurationC { font-size:9px;height:50px;}"),
                                               column(width = 4, 
                                                      checkboxGroupInput(inputId = "historicalDurationA", 
                                                                         label = NULL, 
