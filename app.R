@@ -76,7 +76,7 @@ ui <- fluidPage(
     navbarPage(title=div(img(src="symetra-logo.png", style="margin-top: -12px; 
                              margin-left: -10px; padding-bottom: 10px", height = 50)),
                windowTitle="Treasure Hunt", theme = shinytheme("simplex"),
-        tabPanel(HTML("Percentile of Treasury Yields"), fluid = TRUE, icon = icon("percent"),
+        tabPanel(HTML("Input Treasury Yields"), fluid = TRUE, icon = icon("search-dollar"),
             fluidRow(
                 column(width = 12,
                      fluidRow(HTML("<h3>Choose Your Inputs for Select Durations</h3>"),
@@ -108,7 +108,6 @@ ui <- fluidPage(
                                                                  column(width = 2, numericInput("inputRate6", label = "30-Year", 
                                                                                                 value = 3.02, min = 0, max = 5, step = 0.01)), 
                                                           )
-                                                          
                                                 ),  
                                                 fluidRow( HTML("&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp Percentiles for Input Treasury Rates <br></br>"),
                                                           column(width = 12, 
@@ -135,86 +134,91 @@ ui <- fluidPage(
                                                                    )
                                                          ), style='.small-box margin: 0px;border:2px solid;border-radius:5px;padding: 10px; 
                                                                     border-color:#DCDCDC; border-spacing: 2px; margin-left:10px; font-size: 12px;'))
-                                          ), hr(),
-                                          fluidRow(column(width = 9,
-                                                   fluidRow(HTML("&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp <b> Input Percentiles of Interest</b><br></br>"),
-                                                            column(width = 12, 
-                                                                   column(width = 2, numericInput("inputPercentile1", label = "1-Month", 
-                                                                                                  value = 50, min = 1, max = 100, step = 1)),
-                                                                   column(width = 2, numericInput("inputPercentile2", label = "6-Month", 
-                                                                                                  value = 50, min = 1, max = 100, step = 1)), 
-                                                                   column(width = 2, numericInput("inputPercentile3", label = "1-Year", 
-                                                                                                  value = 50, min = 1, max = 100, step = 1)), 
-                                                                   column(width = 2, numericInput("inputPercentile4", label = "5-Year", 
-                                                                                                  value = 50, min = 1, max = 100, step = 1)), 
-                                                                   column(width = 2, numericInput("inputPercentile5", label = "10-Year", 
-                                                                                                  value = 50, min = 1, max = 100, step = 1)), 
-                                                                   column(width = 2, numericInput("inputPercentile6", label = "30-Year", 
-                                                                                                  value = 50, min = 1, max = 100, step = 1))
-                                                            )
-                                                   ), 
-                                                   fluidRow(HTML("&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp Rates for Input Percentiles <br></br>"),
-                                                            column(width = 12, 
-                                                                   column(width = 2, div(
-                                                                     #tags$b("Treasury Rate"),
-                                                                     htmlOutput("outputPercentile1", container = pre)
-                                                                   )),
-                                                                   column(width = 2, htmlOutput("outputPercentile2", container = pre)),
-                                                                   column(width = 2, htmlOutput("outputPercentile3", container = pre)),
-                                                                   column(width = 2, htmlOutput("outputPercentile4", container = pre)),
-                                                                   column(width = 2, htmlOutput("outputPercentile5", container = pre)),
-                                                                   column(width = 2, htmlOutput("outputPercentile6", container = pre))
-                                                            ) 
-                                                   ),style='margin-bottom:5px;border:2px solid;border-radius:5px;padding: 10px; 
-                                                            border-color:#DCDCDC; border-spacing: 2px;margin-left:50px; font-size:12px'), 
-                                            fluidRow(column(width = 2,
-                                                            fluidRow( HTML("&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp <b> Weighted Index </b><br></br>"),
-                                                                      column(width = 12, tags$label(style = 'display;table-cell; vertical-align:middle; margin-left: 15px;', "Weighted Percentiles"),
-                                                                             column(width = 12, htmlOutput("outputPercentileWeight", container = pre))
-                                                                      )
-                                                            ), HTML("</br>"),
-                                                            fluidRow( tags$label(style = 'display;table-cell; vertical-align:middle; margin-left: 30px;', "Index at Weighted Percentile"),
-                                                                      column(width = 12, 
-                                                                             column(width = 12, htmlOutput("outputPercentileWeightR", container = pre))
-                                                                      )
-                                                            ), style='.small-box margin: 0px;border:2px solid;border-radius:5px;padding: 10px; 
-                                                                      border-color:#DCDCDC; border-spacing: 2px; margin-left:10px; font-size: 12px;')))
-                      
-                                        )
-                                    
-                                    )
-                                  
-                                  
-                           
-                           
+                                          )
+                                     )
+                                )
                            ) #wellpanel
                      )
                 )
             ), 
-            fluidRow(column(width = 12, withSpinner(plotlyOutput("plotRate1", height = 650)))), hr(),
-            fluidRow(tags$label("Short Durations"),
-                     column(width = 12, 
-                         column(width = 4, 
-                                withSpinner(plotlyOutput("plotPercentile1", height = 300))), 
-                         column(width = 4, 
-                                withSpinner(plotlyOutput("plotPercentile2", height = 300))), 
-                         column(width = 4, 
-                                withSpinner(plotlyOutput("plotPercentile3", height = 300))),
-                     )
-            ), tags$br(), hr(), tags$br(),
-            fluidRow(tags$label("Long Durations"),
-                     column(width = 12, 
-                        column(width = 4, 
-                               withSpinner(plotlyOutput("plotPercentile4", height = 300))),
-                        column(width = 4, 
-                               withSpinner(plotlyOutput("plotPercentile5", height = 300))), 
-                        column(width = 4, 
-                               withSpinner(plotlyOutput("plotPercentile6", height = 300)))
-                           
-                           
-                    )
-                ), hr()
-            
+            fluidRow(column(width = 12, withSpinner(plotlyOutput("plotRate1", height = 650)))), hr()
+        ), 
+        
+        tabPanel(HTML("Input Percentile of Treasury Yields"), fluid = TRUE, icon = icon("percent"),
+                 fluidRow(
+                   column(width = 12,
+                          fluidRow(HTML("<h3>Choose Your Inputs for Select Durations</h3>"),
+                                   wellPanel(fluidRow(
+                                     column(width = 12, 
+                                            column(width = 12, 
+                                                   sliderInput("percentileTime2", "Select Time Interval", min = 1990, max = 2020, 
+                                                               value = c(1990, 2020), step = 1, sep = ""))
+                                     )
+                                   ), HTML("<br>"),
+                                   fluidRow(column(width = 12,
+                                                   fluidRow(column(width = 9,
+                                                                   fluidRow(HTML("&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp <b> Input Percentiles of Interest</b><br></br>"),
+                                                                            column(width = 12, 
+                                                                                   column(width = 2, numericInput("inputPercentile1", label = "1-Month", 
+                                                                                                                  value = 50, min = 1, max = 100, step = 1)),
+                                                                                   column(width = 2, numericInput("inputPercentile2", label = "6-Month", 
+                                                                                                                  value = 50, min = 1, max = 100, step = 1)), 
+                                                                                   column(width = 2, numericInput("inputPercentile3", label = "1-Year", 
+                                                                                                                  value = 50, min = 1, max = 100, step = 1)), 
+                                                                                   column(width = 2, numericInput("inputPercentile4", label = "5-Year", 
+                                                                                                                  value = 50, min = 1, max = 100, step = 1)), 
+                                                                                   column(width = 2, numericInput("inputPercentile5", label = "10-Year", 
+                                                                                                                  value = 50, min = 1, max = 100, step = 1)), 
+                                                                                   column(width = 2, numericInput("inputPercentile6", label = "30-Year", 
+                                                                                                                  value = 50, min = 1, max = 100, step = 1))
+                                                                            )
+                                                                   ), 
+                                                                   fluidRow(HTML("&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp Rates for Input Percentiles <br></br>"),
+                                                                            column(width = 12, 
+                                                                                   column(width = 2, div(
+                                                                                     #tags$b("Treasury Rate"),
+                                                                                     htmlOutput("outputPercentile1", container = pre)
+                                                                                   )),
+                                                                                   column(width = 2, htmlOutput("outputPercentile2", container = pre)),
+                                                                                   column(width = 2, htmlOutput("outputPercentile3", container = pre)),
+                                                                                   column(width = 2, htmlOutput("outputPercentile4", container = pre)),
+                                                                                   column(width = 2, htmlOutput("outputPercentile5", container = pre)),
+                                                                                   column(width = 2, htmlOutput("outputPercentile6", container = pre))
+                                                                            ) 
+                                                                   ),style='margin-bottom:5px;border:2px solid;border-radius:5px;padding: 10px; 
+                                            border-color:#DCDCDC; border-spacing: 2px;margin-left:50px; font-size:12px'), 
+                                                            fluidRow(column(width = 2,
+                                                                            fluidRow( HTML("&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp <b> Weighted Index </b><br></br>"),
+                                                                                      column(width = 12, tags$label(style = 'display;table-cell; vertical-align:middle; margin-left: 15px;', "Weighted Percentiles"),
+                                                                                             column(width = 12, htmlOutput("outputPercentileWeight", container = pre))
+                                                                                      )
+                                                                            ), HTML("</br>"),
+                                                                            fluidRow( tags$label(style = 'display;table-cell; vertical-align:middle; margin-left: 30px;', "Index at Weighted Percentile"),
+                                                                                      column(width = 12, 
+                                                                                             column(width = 12, htmlOutput("outputPercentileWeightR", container = pre))
+                                                                                      )
+                                                                            ), style='.small-box margin: 0px;border:2px solid;border-radius:5px;padding: 10px; 
+                                                      border-color:#DCDCDC; border-spacing: 2px; margin-left:10px; font-size: 12px;'))))))))),
+                 fluidRow(tags$label("Short Durations"),
+                          column(width = 12, 
+                                 column(width = 4, 
+                                        withSpinner(plotlyOutput("plotPercentile1", height = 300))), 
+                                 column(width = 4, 
+                                        withSpinner(plotlyOutput("plotPercentile2", height = 300))), 
+                                 column(width = 4, 
+                                        withSpinner(plotlyOutput("plotPercentile3", height = 300))),
+                          )
+                 ), hr(), 
+                 fluidRow(tags$label("Long Durations"),
+                          column(width = 12, 
+                                 column(width = 4, 
+                                        withSpinner(plotlyOutput("plotPercentile4", height = 300))),
+                                 column(width = 4, 
+                                        withSpinner(plotlyOutput("plotPercentile5", height = 300))), 
+                                 column(width = 4, 
+                                        withSpinner(plotlyOutput("plotPercentile6", height = 300)))
+                          )
+                 )
         ),
         tabPanel(HTML("Historical Treasury Yields"), fluid = TRUE, icon = icon("chart-line"),
              # Sidebar layout with a input and output definitions
@@ -445,6 +449,17 @@ server <- function(session, input, output) {
       return(treasury_f)
     })
     
+    weighted_treasury2 <- reactive({
+      treasury <- treasury_time(input$percentileTime2[1], input$percentileTime2[2])
+      treasury <- treasury[,c("Date", "X1.Mo", "X6.Mo", "X1.Yr", "X5.Yr", "X10.Yr", "X30.Yr")]
+      treasury$value <- treasury$X1.Mo*(1/12)+treasury$X6.Mo*(1/2)+treasury$X1.Yr*(1)+
+        treasury$X5.Yr*(5)+treasury$X10.Yr*(10)+treasury$X30.Yr*(30)
+      treasury_f <- treasury[,c("Date", "value")]
+      treasury_f <- treasury_f[!is.na(treasury_f$value),] %>% arrange(value) %>% 
+        mutate(count = seq(n()),  percentile = ecdf(value)(value))
+      return(treasury_f)
+    })
+    
     output$plotRate1 <- renderPlotly({
         treasury <- treasury_time(input$percentileTime[1], input$percentileTime[2])
         treasury <- treasury[,c("Date", "X1.Mo", "X6.Mo", "X1.Yr", "X5.Yr", "X10.Yr", "X30.Yr")]
@@ -463,14 +478,9 @@ server <- function(session, input, output) {
         res_curall <- rbind(res_curr1, res_curr2, res_curr3, res_curr4, res_curr5, res_curr6)
         res_curall$name <- c("1-Month", "6-Month", "1-Year", "5-Year", "10-Year", "30-Year")
         res_curall$name <- factor(res_curall$name, levels = c("1-Month", "6-Month", "1-Year", "5-Year", "10-Year", "30-Year"))
-        
         #find percentile for the weighted index 
         current_index <- sum(res_curall$rate*c(1/12, 1/2, 1, 5, 10, 30))
         res_indexp <- find_seqcurr(current_index, weighted_treasury())
-        #find rate for weighted percentile 
-        current_indexp <- (input$inputPercentile1*(1/12)+input$inputPercentile2*(1/2)+input$inputPercentile3*(1)
-                              +input$inputPercentile4*(5)+input$inputPercentile5*(10)+input$inputPercentile6*(30))/(46+7/12)
-        res_index <- find_ratecurr(current_indexp, weighted_treasury())
         
         #update the output that shows percentile
         output$outputRate1 <- renderText({ paste("<font color=\"#000000\"><b>", round(res_curr1$perct, 3)*100,  "</b>") })
@@ -481,8 +491,7 @@ server <- function(session, input, output) {
         output$outputRate6 <- renderText({ paste("<font color=\"#000000\"><b>", round(res_curr6$perct, 3)*100,  "</b>") })
         output$outputRateWeight <- renderText({ paste("<font color=\"#000000\"><b>", round(res_indexp$rate,3), "</b>") })
         output$outputRateWeightP <- renderText({ paste("<font color=\"#000000\"><b>", round(res_indexp$perct*100,3), "</b>") })
-        output$outputPercentileWeight <- renderText({ paste("<font color=\"#000000\"><b>", round(res_index$perct,3), "</b>") })
-        output$outputPercentileWeightR <- renderText({ paste("<font color=\"#000000\"><b>", round(res_index$rate,3), "</b>") })
+        
         ###plot the graph
         plot_ly(res_curall, x = ~name, y = ~rate, type = "scatter", mode = 'markers+lines', name = "Chosen Treasury Rates",
                 hoverinfo= 'text', text = ~paste0('Rate: ', round(rate,3), "%", '</br></br>', 
@@ -502,7 +511,7 @@ server <- function(session, input, output) {
     })
 
     output$plotPercentile1 <- renderPlotly({
-        treasury <- treasury_time(input$percentileTime[1], input$percentileTime[2])
+        treasury <- treasury_time(input$percentileTime2[1], input$percentileTime2[2])
         treasury_pct <- treasury %>% dplyr::select(Date, "X1.Mo")
         #convert wide to long , drop nas
         treasury_long <- melt(treasury_pct, id.vars = c("Date"))
@@ -557,7 +566,7 @@ server <- function(session, input, output) {
     })
     
     output$plotPercentile2 <- renderPlotly({
-      treasury <- treasury_time(input$percentileTime[1], input$percentileTime[2])
+      treasury <- treasury_time(input$percentileTime2[1], input$percentileTime2[2])
       treasury_pct <- treasury %>% dplyr::select(Date, "X6.Mo")
       #convert wide to long , drop nas
       treasury_long <- melt(treasury_pct, id.vars = c("Date"))
@@ -611,7 +620,7 @@ server <- function(session, input, output) {
     })
  
     output$plotPercentile3 <- renderPlotly({
-      treasury <- treasury_time(input$percentileTime[1], input$percentileTime[2])
+      treasury <- treasury_time(input$percentileTime2[1], input$percentileTime2[2])
       treasury_pct <- treasury %>% dplyr::select(Date, "X1.Yr")
       #convert wide to long , drop nas
       treasury_long <- melt(treasury_pct, id.vars = c("Date"))
@@ -663,7 +672,7 @@ server <- function(session, input, output) {
     })
     
     output$plotPercentile4 <- renderPlotly({
-      treasury <- treasury_time(input$percentileTime[1], input$percentileTime[2])
+      treasury <- treasury_time(input$percentileTime2[1], input$percentileTime2[2])
       treasury_pct <- treasury %>% dplyr::select(Date, "X5.Yr")
       #convert wide to long , drop nas
       treasury_long <- melt(treasury_pct, id.vars = c("Date"))
@@ -716,7 +725,7 @@ server <- function(session, input, output) {
     })
     
     output$plotPercentile5 <- renderPlotly({
-      treasury <- treasury_time(input$percentileTime[1], input$percentileTime[2])
+      treasury <- treasury_time(input$percentileTime2[1], input$percentileTime2[2])
       treasury_pct <- treasury %>% dplyr::select(Date, "X10.Yr")
       #convert wide to long , drop nas
       treasury_long <- melt(treasury_pct, id.vars = c("Date"))
@@ -768,7 +777,7 @@ server <- function(session, input, output) {
     })
     
     output$plotPercentile6 <- renderPlotly({
-      treasury <- treasury_time(input$percentileTime[1], input$percentileTime[2])
+      treasury <- treasury_time(input$percentileTime2[1], input$percentileTime2[2])
       treasury_pct <- treasury %>% dplyr::select(Date, "X30.Yr")
       #convert wide to long , drop nas
       treasury_long <- melt(treasury_pct, id.vars = c("Date"))
@@ -817,6 +826,21 @@ server <- function(session, input, output) {
                                       xref = "x", yref = "y", showarrow = TRUE, arrowhead = 7, ax = 20, ay = -40))%>%  
         config(displaylogo = FALSE, modeBarButtonsToRemove = list("zoomIn2d", "zoomOut2d", "zoom2d", "autoScale2d", "resetScale2d", "select2d", 
                                                                   "hoverClosestCartesian", "hoverCompareCartesian", "lasso2d", "pan2d"))
+    })
+    
+    #find rate for weighted percentile 
+    output$outputPercentileWeight <- renderText({ 
+        current_indexp <- (input$inputPercentile1*(1/12)+input$inputPercentile2*(1/2)+input$inputPercentile3*(1)
+                           +input$inputPercentile4*(5)+input$inputPercentile5*(10)+input$inputPercentile6*(30))/(46+7/12)
+        res_index <- find_ratecurr(current_indexp, weighted_treasury2())
+        paste("<font color=\"#000000\"><b>", round(res_index$perct,3), "</b>") 
+    })
+    
+    output$outputPercentileWeightR <- renderText({ 
+        current_indexp <- (input$inputPercentile1*(1/12)+input$inputPercentile2*(1/2)+input$inputPercentile3*(1)
+                           +input$inputPercentile4*(5)+input$inputPercentile5*(10)+input$inputPercentile6*(30))/(46+7/12)
+        res_index <- find_ratecurr(current_indexp, weighted_treasury2())
+        paste("<font color=\"#000000\"><b>", round(res_index$rate,3), "</b>") 
     })
     
     
