@@ -285,7 +285,33 @@ ui <- fluidPage(
                                                                quotations obtained by the Federal Reserve Bank of New York."))
                          ), HTML("</br>"),
                   HTML(paste0("<h2><b>How It Impacts Us</b></h2>")), hr(),
-                              HTML(paste0("<h4> hi brad </h4>"))
+                              HTML(paste0("<h4> The Asset Adequacy Analysis under the U.S. Standard Valuation Law 
+                                          and Valuation Manual requires the appointed actuary within an insurance 
+                                          company to make an actuarial opinion on whether assets backing reserves 
+                                          are adequate under 'moderately adverse conditions'. Though deterministic 
+                                          scenarios such as the New York 7 (NY7) are widely used to help decide 
+                                          adequacy, much has changed since the introduction of these set of scenarios. 
+                                          In fact, one major caveat is the different interest rate environment today, 
+                                          compared to years ago. Thus, moderately adverse scenarios defined in the 
+                                          NY7 may not appropriately portray the conditions today. <br></br>
+                                          In January 2016, the SOA provided a refined version of moderately adverse 
+                                          scenarios under a more modern context that would reflect the current market 
+                                          environment. The Modern Deterministic Scenarios for Interest Rates (MDS) 
+                                          consisted of a set of 16 scenarios, with 8 low-rate and 8 high-rate scenarios 
+                                          each. This would be an upgrade over the 3 pop-up, 3 pop-down, and level 
+                                          scenarios in the NY7. A more detailed description of the MDS scenarios can 
+                                          be found ", a("here", href = "https://www.soa.org/globalassets/assets/files/research/projects/2017-modern-deterministic-scenarios.pdf"), 
+                                          ". <br></br> Despite the work being done to create new measures to aid 
+                                          insurance companies in Asset Adequacy Analysis, there is little formal 
+                                          definition on what is considered a moderately adverse condition. If the 
+                                          company decides to hold reserves excess of a moderately adverse scenario,
+                                          there is an increase in liabilities or cost to this decision. The cash flow 
+                                          testing reserve should be able to cover this obligation without creating a 
+                                          considerable opportunity cost to this decision. <br></br> 
+                                          The tool illustrated in this web application is neither a replacement to the 
+                                          testing being done, nor a representation of what a moderately adverse scenario 
+                                          is. However, it is intended to provide users with a flexible interface to get
+                                          a rough idea of where current treasury yields are compared to its historicals.</h4>"))
                  )
               )
            )
