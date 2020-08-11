@@ -76,7 +76,7 @@ ui <- fluidPage(
     navbarPage(title=div(img(src="symetra-logo.png", style="margin-top: -12px; 
                              margin-left: -10px; padding-bottom: 10px", height = 50)),
                windowTitle="Treasure Hunt", theme = shinytheme("simplex"),
-        tabPanel(HTML("Input Treasury Yields"), fluid = TRUE, icon = icon("search-dollar"),
+        tabPanel(HTML("Input Treasury Yields"), fluid = TRUE, icon = icon("search"),
             fluidRow(
                 column(width = 12,
                      fluidRow(HTML("<h3>Choose Your Inputs for Select Durations</h3>"),
@@ -227,9 +227,9 @@ ui <- fluidPage(
                             titlePanel(HTML("<h3>Choose Parameters</h3></br>")), 
                             fluidRow(column(width = 12,
                                             tags$label("Select Duration"), 
-                                            fluidRow(tags$style("#historicalDurationA { font-size:9px;height:50px;}"), 
-                                                     tags$style("#historicalDurationB { font-size:9px;height:50px;}"),
-                                                     tags$style("#historicalDurationC { font-size:9px;height:50px;}"),
+                                            fluidRow(tags$style("#historicalDurationA { font-size:12px;height:50px;}"), 
+                                                     tags$style("#historicalDurationB { font-size:12px;height:50px;}"),
+                                                     tags$style("#historicalDurationC { font-size:12px;height:50px;}"),
                                               column(width = 4, 
                                                      checkboxGroupInput(inputId = "historicalDurationA", 
                                                                         label = NULL, 
@@ -273,19 +273,9 @@ ui <- fluidPage(
         #navbarMenu("More", icon = icon("info-circle"),
             tabPanel("About", fluid = TRUE, icon = icon("info-circle"),
                 fluidRow(
-                  column(6,
-                         HTML(paste0("<h2><b>Treasury Yield Curves</b></h2>")), hr(),
-                         HTML(paste0("<h4>The daily treasury yield curve rates is directly taken from the ", 
-                              a("US Department of Treasury", href = "https://home.treasury.gov/policy-issues/financing-the-government/interest-rate-statistics"), 
-                              ".", HTML("</br></br>"), "The US Department of Treasury explains the treasury yield curves as", HTML("</br></br>"),
-                              shinydashboardPlus::blockQuote("[A curve that] relates the yield on a security to 
-                                                               its time to maturity based on the closing market bid yields 
-                                                               on actively traded Treasury securities in the over-the-counter 
-                                                               market. These market yields are calculated from composites of 
-                                                               quotations obtained by the Federal Reserve Bank of New York."))
-                         ), HTML("</br>"),
-                  HTML(paste0("<h2><b>How It Impacts Us</b></h2>")), hr(),
-                              HTML(paste0("<h4> The Asset Adequacy Analysis under the U.S. Standard Valuation Law 
+                  column(6, 
+                         HTML(paste0("<h2><b>How It Impacts Us</b></h2>")), hr(),
+                         HTML(paste0("<h4> The Asset Adequacy Analysis under the U.S. Standard Valuation Law 
                                           and Valuation Manual requires the appointed actuary within an insurance 
                                           company to make an actuarial opinion on whether assets backing reserves 
                                           are adequate under 'moderately adverse conditions'. Though deterministic 
@@ -301,7 +291,7 @@ ui <- fluidPage(
                                           each. This would be an upgrade over the 3 pop-up, 3 pop-down, and level 
                                           scenarios in the NY7. A more detailed description of the MDS scenarios can 
                                           be found ", a("here", href = "https://www.soa.org/globalassets/assets/files/research/projects/2017-modern-deterministic-scenarios.pdf"), 
-                                          ". <br></br> Despite the work being done to create new measures to aid 
+                                     ". <br></br> Despite the work being done to create new measures to aid 
                                           insurance companies in Asset Adequacy Analysis, there is little formal 
                                           definition on what is considered a moderately adverse condition. If the 
                                           company decides to hold reserves excess of a moderately adverse scenario,
@@ -312,10 +302,36 @@ ui <- fluidPage(
                                           testing being done, nor a representation of what a moderately adverse scenario 
                                           is. However, it is intended to provide users with a flexible interface to get
                                           a rough idea of where current treasury yields are compared to its historicals.</h4>"))
-                 )
+                  ),
+                  column(6,
+                         HTML(paste0("<h2><b>Treasury Yield Curves</b></h2>")), hr(),
+                         HTML(paste0("<h4>The daily treasury yield curve rates is directly taken from the ", 
+                              a("US Department of Treasury", href = "https://home.treasury.gov/policy-issues/financing-the-government/interest-rate-statistics"), 
+                              ".", HTML("</br></br>"), "The US Department of Treasury explains the treasury yield curves as", HTML("</br></br>"),
+                              shinydashboardPlus::blockQuote("[A curve that] relates the yield on a security to 
+                                                               its time to maturity based on the closing market bid yields 
+                                                               on actively traded Treasury securities in the over-the-counter 
+                                                               market. These market yields are calculated from composites of 
+                                                               quotations obtained by the Federal Reserve Bank of New York."), 
+                              "These yields calculate the amount of money an individual earns by owning different debt instruments
+                              such as U.S. treasury bills, notes, bonds, or securities sold by the U.S. Department of Treasury.
+                              The yield reflects the percentage earned (interest rate) on the investment when the government is borrowing
+                              the money. The methodology to derive these daily treasury yields are from quasi-cubic hermite spline functions
+                              that can be found ", a("here", href = "https://home.treasury.gov/policy-issues/financing-the-government/interest-rate-statistics/treasury-yield-curve-methodology"), 
+                              ".")
+                         )
+                  )
+              ), HTML("<br></br>"),
+              fluidRow(
+                column(6,
+                       HTML(paste0("<h2><b>About the Web Application</b></h2>")), hr(),
+                       HTML(paste0("<h4> The web application was built in R and RStudio with Shiny, along with many other packages. 
+                                   For questions about the code, get in touch with me on ", 
+                                   a("LinkedIn", href = "https://www.linkedin.com/in/benjamin-hsu-10b33a97/", target="_blank"), " or by email at ", 
+                                   a("bh2722@columbia.edu", href = "mailto:bh2722@columbia.edu", target="_blank"), "."))
+                )
               )
-           )
-        ),
+        )),
         tags$head(
           tags$style(type = 'text/css', 
                      HTML('.navbar-default .navbar-nav > .active >a:hover {color: #555;}
