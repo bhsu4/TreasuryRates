@@ -247,6 +247,7 @@ ui <- fluidPage(
                                                                                       )
                                                                             ), style='.small-box margin: 0px;border:2px solid;border-radius:5px;padding: 10px; 
                                                       border-color:#DCDCDC; border-spacing: 2px; margin-left:10px; font-size: 12px;'))))))))),
+                 fluidRow(column(width = 12, withSpinner(plotlyOutput("plotRate2", height = 650)))), hr(),
                  fluidRow(tags$label("Short Durations"),
                           column(width = 12, 
                                  column(width = 3, 
@@ -388,6 +389,18 @@ ui <- fluidPage(
                   )
               ), HTML("<br></br>"),
               fluidRow(
+                column(6, 
+                       HTML(paste0("<h2><b>Data for Percentile Calculation</b></h2>")), hr(),
+                       HTML(paste0("<h4> The percentile calculations will depend on the data availability of 
+                                    each duration, with all major gaps being noted in the table below. 
+                                    For our percentile calculations, results were based on available data 
+                                    for that specific duration. However, the weighted index percentile calculation 
+                                    was based on dates where there was available data for all durations. 
+                                   <em> Please note that 10/11/2010 is a consistent gap amongst all durations. </em>")), HTML("<br></br>"),
+                       DT::dataTableOutput("table")
+                       
+                
+                ),
                 column(6,
                        HTML(paste0("<h2><b>About the Web Application</b></h2>")), hr(),
                        HTML(paste0("<h4> The web application was built in R and RStudio with Shiny, along with many other packages. 
@@ -439,6 +452,27 @@ duration_names <- reactive({
 
 server <- function(session, input, output) {
     
+    output$table <- renderTable(data.frame(Duration = c("1 Month", "2 Month", "3 Month", "6 Month", "1 Year", 
+                                                        "2 Year", "3 Year", "5 Year", "7 Year", "10 Year", 
+                                                        "20 Year", "30 Year")))  
+  
+    
+    output$table <- DT::renderDataTable({
+      datatable(data.frame(Duration = c("1 Month", "2 Month", "3 Month", "6 Month", "1 Year", 
+                              "2 Year", "3 Year", "5 Year", "7 Year", "10 Year", 
+                              "20 Year", "30 Year"), 
+                           Gaps = c("1/2/1990 - 07/31/2001", 
+                                    "1/2/1990 - 10/15/2018",
+                                    "12/10/2008, 12/18/2008, 12/24/2008", 
+                                    "None", "None", "None", "None", "None", "None", "None",
+                                    "1/2/1990 - 9/30/1993",
+                                    "2/15/2002 - 2/9/2006"), 
+                           Omit = c("No", "Yes", "No", "No", "No", "No", "No", "No", "No", "No", "No", "No")), 
+                class = 'cell-border stripe', 
+                options = list(searching = FALSE, pageLength = 12, lengthMenu = FALSE, paging = FALSE, dom = 't', order = FALSE), rownames= FALSE) #%>% 
+        #formatStyle(border = '1px solid #ddd')
+    })
+  
     dur_selected <- reactive({
         x <- c(input$historicalDurationA, input$historicalDurationB, input$historicalDurationC)
     })
@@ -630,7 +664,51 @@ server <- function(session, input, output) {
                                                                     "hoverClosestCartesian", "hoverCompareCartesian", "lasso2d", "pan2d"))
 
     })
-
+    
+    output$plotRate2 <- renderPlotly({
+      treasury <- treasury_time(input$percentileTime2[1], input$percentileTime2[2])
+      treasury <- treasury[,c("Date", "X1.Mo", "X3.Mo", "X6.Mo", "X1.Yr", "X2.Yr", "X3.Yr", "X5.Yr", "X7.Yr", "X10.Yr", "X20.Yr", "X30.Yr")]
+      treasury_long <- melt(treasury, id.vars = c("Date"))
+      treasury_long2 <- treasury_long[!is.na(treasury_long$value),] %>% group_by(variable) %>% arrange(value) %>% 
+        mutate(count = seq(n()),  percentile = ecdf(value)(value))
+      #for each of the inputs
+      res_currp1 <- find_ratecurr(input$inputPercentile1, treasury_long2[which(treasury_long2$variable == "X1.Mo"),])
+      res_currp2 <- find_ratecurr(input$inputPercentile2, treasury_long2[which(treasury_long2$variable == "X3.Mo"),])
+      res_currp3 <- find_ratecurr(input$inputPercentile3, treasury_long2[which(treasury_long2$variable == "X6.Mo"),])
+      res_currp4 <- find_ratecurr(input$inputPercentile4, treasury_long2[which(treasury_long2$variable == "X1.Yr"),])
+      res_currp5 <- find_ratecurr(input$inputPercentile5, treasury_long2[which(treasury_long2$variable == "X2.Yr"),])
+      res_currp6 <- find_ratecurr(input$inputPercentile6, treasury_long2[which(treasury_long2$variable == "X3.Yr"),])
+      res_currp7 <- find_ratecurr(input$inputPercentile7, treasury_long2[which(treasury_long2$variable == "X5.Yr"),])
+      res_currp8 <- find_ratecurr(input$inputPercentile8, treasury_long2[which(treasury_long2$variable == "X7.Yr"),])
+      res_currp9 <- find_ratecurr(input$inputPercentile9, treasury_long2[which(treasury_long2$variable == "X10.Yr"),])
+      res_currp10 <- find_ratecurr(input$inputPercentile10, treasury_long2[which(treasury_long2$variable == "X20.Yr"),])
+      res_currp11 <- find_ratecurr(input$inputPercentile11, treasury_long2[which(treasury_long2$variable == "X30.Yr"),])
+      
+      #result of all the rates
+      res_curpall <- rbind(res_currp1, res_currp2, res_currp3, res_currp4, res_currp5, res_currp6, res_currp7, res_currp8, 
+                          res_currp9, res_currp10, res_currp11)
+      res_curpall$name <- c("1-Month", "3-Month", "6-Month", "1-Year", "2-Year", "3-Year", "5-Year", "7-Year", "10-Year", "20-Year", "30-Year")
+      res_curpall$name <- factor(res_curpall$name, levels = c("1-Month", "3-Month", "6-Month", "1-Year", "2-Year", "3-Year", 
+                                                            "5-Year", "7-Year", "10-Year", "20-Year", "30-Year"))
+      
+      ###plot the graph
+      plot_ly(res_curpall, x = ~name, y = ~rate, type = "scatter", mode = 'markers+lines', name = "Chosen Treasury Rates",
+              hoverinfo= 'text', text = ~paste0('Rate: ', round(rate,3), "%", '</br></br>', 
+                                                'Duration: ', name, '</br>')) %>%
+        add_trace(x = ~name, y = ~perct, mode = "markers+lines", name = "Percentiles of Chosen Treasury Rates", yaxis = "y2",
+                  hoverinfo= 'text', line = list(dash = "dash"), text = ~paste0('Percentile: ', round(perct,3)*100, '</br></br>', 
+                                                                                'Duration: ', name, '</br>')) %>% 
+        layout(yaxis2 = list(tickfont = list(color = 'black'), overlaying = "y", side = "right")) %>% 
+        layout(title = "Input Rates for Select Durations", 
+               xaxis = list(title= ""), yaxis = list(title = "Treasury Rates"), 
+               yaxis2 = list(showline = FALSE, color = "black", overlaying = "y", side = "right", title = "Percentiles (100th)"),
+               legend = list(orientation = "h", xanchor = "center", x = 0.5, font = list(size = 15)),
+               margin = m <- list(r = 80)) %>% 
+        config(displaylogo = FALSE, modeBarButtonsToRemove = list("zoomIn2d", "zoomOut2d", "zoom2d", "autoScale2d", "resetScale2d", "select2d", 
+                                                                  "hoverClosestCartesian", "hoverCompareCartesian", "lasso2d", "pan2d"))
+      
+    })
+    
     output$plotPercentile1 <- renderPlotly({
         treasury <- treasury_time(input$percentileTime2[1], input$percentileTime2[2])
         treasury_pct <- treasury %>% dplyr::select(Date, "X1.Mo")
@@ -1217,7 +1295,7 @@ server <- function(session, input, output) {
         current_indexp <- (input$inputPercentile1*(1/12)+input$inputPercentile2*(3/12)+input$inputPercentile3*(1/2)+
                              input$inputPercentile4*(1)+input$inputPercentile5*(2)+input$inputPercentile6*(3)+
                              input$inputPercentile7*(5)+input$inputPercentile8*(7)+input$inputPercentile9*(10)+
-                             input$inputPercentile10*(20)+input$inputPercentile6*(30))/(78+10/12)
+                             input$inputPercentile10*(20)+input$inputPercentile11*(30))/(78+10/12)
         res_index <- find_ratecurr(current_indexp, weighted_treasury2())
         paste("<font color=\"#000000\"><b>", round(res_index$perct,3), "</b>") 
     })
@@ -1226,7 +1304,7 @@ server <- function(session, input, output) {
         current_indexp <- (input$inputPercentile1*(1/12)+input$inputPercentile2*(3/12)+input$inputPercentile3*(1/2)+
                              input$inputPercentile4*(1)+input$inputPercentile5*(2)+input$inputPercentile6*(3)+
                              input$inputPercentile7*(5)+input$inputPercentile8*(7)+input$inputPercentile9*(10)+
-                             input$inputPercentile10*(20)+input$inputPercentile6*(30))/(78+10/12)
+                             input$inputPercentile10*(20)+input$inputPercentile11*(30))/(78+10/12)
         res_index <- find_ratecurr(current_indexp, weighted_treasury2())
         paste("<font color=\"#000000\"><b>", round(res_index$rate,3), "</b>") 
     })
