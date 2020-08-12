@@ -75,8 +75,8 @@ ui <- fluidPage(
     #Navbar structure for UI
     navbarPage(title=div(img(src="symetra-logo.png", style="margin-top: -12px; 
                              margin-left: -10px; padding-bottom: 10px", height = 50)),
-               windowTitle="Treasure Hunt", theme = shinytheme("simplex"),
-        tabPanel(HTML("Input Treasury Yields"), fluid = TRUE, icon = icon("search"),
+               windowTitle="Treasure Hunt", theme = shinytheme("simplex"), id = "tabs_all",
+        tabPanel(HTML("Input Treasury Yields"), fluid = TRUE, icon = icon("search"), value = "inputyield",
             fluidRow(
                 column(width = 12,
                      fluidRow(HTML("<h3>Choose Your Inputs for Select Durations</h3>"),
@@ -125,7 +125,7 @@ ui <- fluidPage(
                                                           column(width = 12, 
                                                                  column(width = 2, numericInput("inputRate7", label = "5-Year", 
                                                                                                 value = 0.29, min = 0, max = 9.1, step = 0.01)),
-                                                                 column(width = 2, numericInput("inputRate8", label = "3-Month", 
+                                                                 column(width = 2, numericInput("inputRate8", label = "7-Year", 
                                                                                                 value = 0.49, min = 0, max = 9.12, step = 0.01)),
                                                                  column(width = 2, numericInput("inputRate9", label = "10-Year", 
                                                                                                 value = 0.66, min = 0, max = 9.09, step = 0.01)), 
@@ -283,7 +283,7 @@ ui <- fluidPage(
                           )
                  )
         ),
-        tabPanel(HTML("Historical Treasury Yields"), fluid = TRUE, icon = icon("chart-line"),
+        tabPanel(HTML("Historical Treasury Yields"), fluid = TRUE, icon = icon("chart-line"), value = "historicals",
              # Sidebar layout with a input and output definitions
              sidebarLayout(
                sidebarPanel(width = 3,
@@ -321,7 +321,16 @@ ui <- fluidPage(
                                                         min = 1990, max = 2020,
                                                         value = c(1990,2020), sep = ""),
                                             helpText(HTML("<p style = 'text-align: right'>Last update: 6/30/2020</p>")),
-                                            hr())#, 
+                                            tags$br(), hr(), tags$br(), 
+                                            wellPanel( #if want latest date, set value null and updatedateinput
+                                              dateInput(inputId = "historicalDate", "Select Date", value = '06-30-2020', format = "yyyy-mm-dd"),
+                                              div(style="display:inline-block; width:160%; text-align: center;", actionButton(inputId = "DateRate", label = "Input to Treasury", icon = icon("plus"),
+                                                           style="color: #fff; background-color: #b3b3b3; 
+                                                                  border-color: #b3b3b3; padding:5px; font-size:100%;"))
+                                              
+                                            ), # wellPanel
+                                            helpText(HTML("<p style = 'text-align: right'>Only available for no-gaps</p>")),
+                                            )#, 
                                      #tags$label("Input Percentile for Selected Duration(s)"),
                                      #wellPanel(fluidRow(align = "center", uiOutput("inputPercentile"))
                                      #), hr())
@@ -509,12 +518,54 @@ server <- function(session, input, output) {
         return(list(treasury_long, treasury_startmo))
     })
     
+    ###action button, update date selection 
+    
+    observe({
+      x = input$historicalYear
+      # We'll use the input$controller variable multiple times, so save it as x
+      # for convenience.
+      treasury_date <- treasury_time(x[1], x[2])
+      updateDateInput(session, "historicalDate",
+                      value = treasury_date[which(treasury_date$year == x[1]),]$Date,
+                      min   = treasury_date[which(treasury_date$year == x[1]),]$Date,
+                      max   = treasury_date[which(treasury_date$year == x[2]),]$Date
+      )
+    })
+    
+    treasury_date <- reactive({
+      treasury_date <- treasury_time(1990, 2020) #all dates available
+      res <- treasury_date[which(treasury_date$Date == input$historicalDate),]
+      return(res)
+    })
+    
+    observeEvent(input$DateRate,{
+      # Data
+      updateNumericInput(session, "inputRate1", value = treasury_date()$X1.Mo)
+      updateNumericInput(session, "inputRate2", value = treasury_date()$X3.Mo)
+      updateNumericInput(session, "inputRate3", value = treasury_date()$X6.Mo)
+      updateNumericInput(session, "inputRate4", value = treasury_date()$X1.Yr)
+      updateNumericInput(session, "inputRate5", value = treasury_date()$X2.Yr)
+      updateNumericInput(session, "inputRate6", value = treasury_date()$X3.Yr)
+      updateNumericInput(session, "inputRate7", value = treasury_date()$X5.Yr)
+      updateNumericInput(session, "inputRate8", value = treasury_date()$X7.Yr)
+      updateNumericInput(session, "inputRate9", value = treasury_date()$X10.Yr)
+      updateNumericInput(session, "inputRate10", value = treasury_date()$X20.Yr)
+      updateNumericInput(session, "inputRate11", value = treasury_date()$X30.Yr)
+      #jump to tab
+      #newtab <- switch(input$tabs_all, "inputyield" = "historicals")
+      #updateTabItems(session, "tabs_all", newtab)
+      updateTabsetPanel(session, "tabs_all",
+                        selected = "inputyield")
+    })
+    
+    
     output$historicalLP <- renderPlotly({
         
         shiny::validate(
             need(length(dur_selected()) >0, "Please Choose a Duration")
         )
-        
+        print(input$historicalDate)
+        print(treasury_date()$X1.Mo)
         #get legend names 
         treasury_line <- merge(treasury_res()[[1]], duration_names(), by = "variable")
         treasury_point <- merge(treasury_res()[[2]], duration_names(), by = "variable")
@@ -538,6 +589,15 @@ server <- function(session, input, output) {
                            legendgroup = ~vartitle, showlegend = F, 
                            color = ~vartitle, mode = 'markers',               
                            marker = list(symbol = "circle", size = 8), 
+                           x = ~Date, y = ~value, 
+                           hoverinfo = 'text', 
+                           text = ~paste0('Date: ', Date, '</br></br>', 
+                                          'Duration: ', vartitle, '</br>',
+                                          'Rate: ', value, "%"))
+            p <- add_trace(p, data = treasury_line[treasury_line$Date == input$historicalDate & treasury_line$vartitle == i,], 
+                           legendgroup = ~vartitle, showlegend = F, 
+                           color = ~vartitle, mode = 'markers',               
+                           marker = list(symbol = "circle", size = 8, color = "#000000"), 
                            x = ~Date, y = ~value, 
                            hoverinfo = 'text', 
                            text = ~paste0('Date: ', Date, '</br></br>', 
@@ -602,6 +662,24 @@ server <- function(session, input, output) {
       treasury_f3 <- treasury_f2 %>% arrange(value) %>% mutate(count = seq(n()),  percentile = ecdf(value)(value))
       return(treasury_f3)
     })
+    
+    #treasury_dump <- reactive({
+    #  treasury <- treasury_time(input$percentileTime[1], input$percentileTime[2])
+    #  treasury <- treasury[,c("Date", "X1.Mo", "X3.Mo", "X6.Mo", "X1.Yr", "X2.Yr", "X3.Yr", "X5.Yr", "X7.Yr", "X10.Yr", "X20.Yr", "X30.Yr")]
+    #  treasury_long <- melt(treasury, id.vars = c("Date"))
+    #  treasury_long2 <- treasury_long[!is.na(treasury_long$value),] %>% group_by(variable) %>% arrange(value) %>% 
+    #    mutate(count = seq(n()),  percentile = ecdf(value)(value)) 
+    #  return(treasury_long2)
+    #})
+    
+    #output$outputRate1 <- renderText({ 
+    #  
+    #  res_curr1 <- find_seqcurr(input$inputRate1, treasury_dump()[which(treasury_dump()$variable == "X1.Mo"),])
+    ##  paste("<font color=\"#000000\"><b>", round(res_curr1$perct, 3)*100,  "</b>") 
+    #  
+    #})
+    
+    
     
     output$plotRate1 <- renderPlotly({
         treasury <- treasury_time(input$percentileTime[1], input$percentileTime[2])
@@ -1309,6 +1387,7 @@ server <- function(session, input, output) {
         paste("<font color=\"#000000\"><b>", round(res_index$rate,3), "</b>") 
     })
     
+    ###### action button and date update
     
 }
 
