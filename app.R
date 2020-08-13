@@ -37,20 +37,34 @@ find_seqpercentiles <- function(dat){
 }
 
 find_seqcurr <- function(current_point, dat){
-  if(current_point <= as.numeric(min(dat$value))){
-    perct_x = min(dat[which(dat$value == as.numeric(min(dat$value))),]$percentile)
-  }
-  else if(current_point >= as.numeric(max(dat$value))){
-    perct_x = 1
-  }
-  else{
-    my_k <- min(which(current_point <= dat$value))
-    total_diff = as.numeric(dat[my_k,]$value)-as.numeric(dat[my_k-1,]$value)
-    curr_diff <- current_point-as.numeric(dat[my_k-1,]$value)
-    perct_x = curr_diff/total_diff*as.numeric(dat[my_k,]$percentile) +
-                (1-curr_diff/total_diff)*as.numeric(dat[my_k-1,]$percentile)
-  }
-  return(data.frame(perct = perct_x, rate = current_point))
+  
+  tryCatch(
+    # This is what I want to do...
+    {
+      if(current_point <= as.numeric(min(dat$value))){
+        perct_x = min(dat[which(dat$value == as.numeric(min(dat$value))),]$percentile)
+      }
+      else if(current_point == as.numeric(max(dat$value))){
+        perct_x = max(dat[which(dat$value == as.numeric(max(dat$value))),]$percentile)
+      }
+      else if(current_point > as.numeric(max(dat$value))){
+        perct_x = 1
+      }
+      else{
+        my_k <- min(which(current_point <= dat$value))
+        total_diff = as.numeric(dat[my_k,]$value)-as.numeric(dat[my_k-1,]$value)
+        curr_diff <- current_point-as.numeric(dat[my_k-1,]$value)
+        perct_x = curr_diff/total_diff*as.numeric(dat[my_k,]$percentile) +
+          (1-curr_diff/total_diff)*as.numeric(dat[my_k-1,]$percentile)
+      }
+      return(data.frame(perct = perct_x, rate = current_point))
+    },
+    # ... but if an error occurs, tell me what happened: 
+    error = function(error_message) {
+      message("Non-numeric input")
+      return(data.frame(perct = NA, rate = NA))
+    }
+  )
 }
 
 find_ratecurr <- function(current_point, dat){
@@ -762,6 +776,13 @@ server <- function(session, input, output) {
       res_currp10 <- find_ratecurr(input$inputPercentile10, treasury_long2[which(treasury_long2$variable == "X20.Yr"),])
       res_currp11 <- find_ratecurr(input$inputPercentile11, treasury_long2[which(treasury_long2$variable == "X30.Yr"),])
       
+      res_currprate <- res_currp1$rate*(1/12)+res_currp2$rate*(3/12)+res_currp3$rate*(6/12)+res_currp4$rate*(1)+res_currp5$rate*(2)+
+                          res_currp6$rate*(3)+res_currp7$rate*(5)+res_currp8$rate*(7)+res_currp9$rate*(10)+res_currp10$rate*(20)+res_currp11$rate*(30)
+      
+      output$outputPercentileWeight <- renderText({ paste("<font color=\"#000000\"><b>", round(res_currprate, 3), "</b>") })
+      output$outputPercentileWeightR <- renderText({ 
+                                              res_index <- find_seqcurr(res_currprate, weighted_treasury2())
+                                              paste("<font color=\"#000000\"><b>", round(res_index$perct*100,3), "</b>") })
       #result of all the rates
       res_curpall <- rbind(res_currp1, res_currp2, res_currp3, res_currp4, res_currp5, res_currp6, res_currp7, res_currp8, 
                           res_currp9, res_currp10, res_currp11)
@@ -774,7 +795,7 @@ server <- function(session, input, output) {
               hoverinfo= 'text', text = ~paste0('Rate: ', round(rate,3), "%", '</br></br>', 
                                                 'Duration: ', name, '</br>')) %>%
         add_trace(x = ~name, y = ~perct, mode = "markers+lines", name = "Percentiles of Chosen Treasury Rates", yaxis = "y2",
-                  hoverinfo= 'text', line = list(dash = "dash"), text = ~paste0('Percentile: ', round(perct,3)*100, '</br></br>', 
+                  hoverinfo= 'text', line = list(dash = "dash"), text = ~paste0('Percentile: ', round(perct,3), '</br></br>', 
                                                                                 'Duration: ', name, '</br>')) %>% 
         layout(yaxis2 = list(tickfont = list(color = 'black'), overlaying = "y", side = "right")) %>% 
         layout(title = "Input Rates for Select Durations", 
@@ -1368,24 +1389,7 @@ server <- function(session, input, output) {
                                                                   "hoverClosestCartesian", "hoverCompareCartesian", "lasso2d", "pan2d"))
     })
     
-    #find rate for weighted percentile 
-    output$outputPercentileWeight <- renderText({ 
-        current_indexp <- (input$inputPercentile1*(1/12)+input$inputPercentile2*(3/12)+input$inputPercentile3*(1/2)+
-                             input$inputPercentile4*(1)+input$inputPercentile5*(2)+input$inputPercentile6*(3)+
-                             input$inputPercentile7*(5)+input$inputPercentile8*(7)+input$inputPercentile9*(10)+
-                             input$inputPercentile10*(20)+input$inputPercentile11*(30))/(78+10/12)
-        res_index <- find_ratecurr(current_indexp, weighted_treasury2())
-        paste("<font color=\"#000000\"><b>", round(res_index$perct,3), "</b>") 
-    })
     
-    output$outputPercentileWeightR <- renderText({ 
-        current_indexp <- (input$inputPercentile1*(1/12)+input$inputPercentile2*(3/12)+input$inputPercentile3*(1/2)+
-                             input$inputPercentile4*(1)+input$inputPercentile5*(2)+input$inputPercentile6*(3)+
-                             input$inputPercentile7*(5)+input$inputPercentile8*(7)+input$inputPercentile9*(10)+
-                             input$inputPercentile10*(20)+input$inputPercentile11*(30))/(78+10/12)
-        res_index <- find_ratecurr(current_indexp, weighted_treasury2())
-        paste("<font color=\"#000000\"><b>", round(res_index$rate,3), "</b>") 
-    })
     
     ###### action button and date update
     
