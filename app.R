@@ -11,6 +11,10 @@ library(shinycssloaders)
 library(reshape2)
 library(RColorBrewer)
 
+#parsing 
+library('XML')
+library('RCurl')
+
 #finding percentile of interests' treasury rates 
 find_seqpercentiles <- function(dat){
   #quantile points
@@ -536,21 +540,46 @@ ui <- fluidPage(
     #)
 )
 
+parsing_treasury <- reactive({
+  # Save the URL of the xml file in a variable
+  fileUrl<- "https://data.treasury.gov/feed.svc/DailyTreasuryYieldCurveRateData" 
+  
+  ###Using the rcurl package, first download, then parse
+  #Get the content
+  fileContent = getURL(fileUrl)
+  
+  #parse xml from text string
+  xmlfile.fromstring = xmlParse(fileContent,asText=TRUE)
+  # Use the xmlRoot-function to access the top node
+  xmltop = xmlRoot(xmlfile.fromstring)
+  
+  bonds_dates  = xpathSApply(xmltop, "//ns:entry/ns:content//d:NEW_DATE", function(x){xmlValue(x)}, namespaces=c(ns="http://www.w3.org/2005/Atom", d="http://schemas.microsoft.com/ado/2007/08/dataservices"))
+  bonds_1_month = xpathSApply(xmltop, "//ns:entry/ns:content//d:BC_1MONTH", function(x){as.numeric(xmlValue(x))}, namespaces=c(ns="http://www.w3.org/2005/Atom", d="http://schemas.microsoft.com/ado/2007/08/dataservices"))
+  bonds_2_month = xpathSApply(xmltop, "//ns:entry/ns:content//d:BC_2MONTH", function(x){as.numeric(xmlValue(x))}, namespaces=c(ns="http://www.w3.org/2005/Atom", d="http://schemas.microsoft.com/ado/2007/08/dataservices"))
+  bonds_3_month = xpathSApply(xmltop, "//ns:entry/ns:content//d:BC_3MONTH", function(x){as.numeric(xmlValue(x))}, namespaces=c(ns="http://www.w3.org/2005/Atom", d="http://schemas.microsoft.com/ado/2007/08/dataservices"))
+  bonds_6_month = xpathSApply(xmltop, "//ns:entry/ns:content//d:BC_6MONTH", function(x){as.numeric(xmlValue(x))}, namespaces=c(ns="http://www.w3.org/2005/Atom", d="http://schemas.microsoft.com/ado/2007/08/dataservices"))
+  bonds_1_year = xpathSApply(xmltop, "//ns:entry/ns:content//d:BC_1YEAR", function(x){as.numeric(xmlValue(x))}, namespaces=c(ns="http://www.w3.org/2005/Atom", d="http://schemas.microsoft.com/ado/2007/08/dataservices"))
+  bonds_2_year = xpathSApply(xmltop, "//ns:entry/ns:content//d:BC_2YEAR", function(x){as.numeric(xmlValue(x))}, namespaces=c(ns="http://www.w3.org/2005/Atom", d="http://schemas.microsoft.com/ado/2007/08/dataservices"))
+  bonds_3_year = xpathSApply(xmltop, "//ns:entry/ns:content//d:BC_3YEAR", function(x){as.numeric(xmlValue(x))}, namespaces=c(ns="http://www.w3.org/2005/Atom", d="http://schemas.microsoft.com/ado/2007/08/dataservices"))
+  bonds_5_year = xpathSApply(xmltop, "//ns:entry/ns:content//d:BC_5YEAR", function(x){as.numeric(xmlValue(x))}, namespaces=c(ns="http://www.w3.org/2005/Atom", d="http://schemas.microsoft.com/ado/2007/08/dataservices"))
+  bonds_7_year = xpathSApply(xmltop, "//ns:entry/ns:content//d:BC_7YEAR", function(x){as.numeric(xmlValue(x))}, namespaces=c(ns="http://www.w3.org/2005/Atom", d="http://schemas.microsoft.com/ado/2007/08/dataservices"))
+  bonds_10_year = xpathSApply(xmltop, "//ns:entry/ns:content//d:BC_10YEAR", function(x){as.numeric(xmlValue(x))}, namespaces=c(ns="http://www.w3.org/2005/Atom", d="http://schemas.microsoft.com/ado/2007/08/dataservices"))
+  bonds_20_year = xpathSApply(xmltop, "//ns:entry/ns:content//d:BC_20YEAR", function(x){as.numeric(xmlValue(x))}, namespaces=c(ns="http://www.w3.org/2005/Atom", d="http://schemas.microsoft.com/ado/2007/08/dataservices"))
+  bonds_30_year = xpathSApply(xmltop, "//ns:entry/ns:content//d:BC_30YEAR", function(x){as.numeric(xmlValue(x))}, namespaces=c(ns="http://www.w3.org/2005/Atom", d="http://schemas.microsoft.com/ado/2007/08/dataservices"))
+  
+  bond = data.frame(Date=strptime(bonds_dates,format="%Y-%m-%dT%H:%M:%S", tz = "GMT"), 
+                    X1.Mo = bonds_1_month, X2.Mo = bonds_2_month, X3.Mo = bonds_3_month, 
+                    X6.Mo = bonds_6_month, X1.Yr = bonds_1_year, X2.Yr = bonds_2_year, 
+                    X3.Yr = bonds_3_year, X5.Yr = bonds_5_year, X7.Yr = bonds_7_year, 
+                    X10.Yr = bonds_10_year, X20.Yr = bonds_20_year, X30.Yr = bonds_30_year)
+  bond_f <- bond[order(bond$Date),]
+})
 
                         
 treasury_time <- function(t1, t2){
-    treasury <- read.csv("TreasuryRates.csv")
-    #convert to date format
-    treasury$Date <- as.Date(treasury$Date, "%m/%d/%Y")
-    treasury$year <- year(ymd(treasury$Date))
-    treasury$month <- month(ymd(treasury$Date))
-    treasury$day <- day(ymd(treasury$Date))
-    #change to numeric
-    for(i in 2:13){
-      treasury[,i] <- as.numeric(as.character(treasury[,i]))
-    }
     #choose interval of interest
-    return(treasury %>% filter(year >= t1 & year <= t2))
+    return(parsing_treasury() %>% filter(year(Date) >= t1 & year(Date) <= t2))
+    #return(parsing_treasury())
 }
 
 
@@ -736,10 +765,7 @@ server <- function(session, input, output) {
 #### historical percentile tab #########
     
     curr_point <- reactive({
-        treasury <- read.csv("TreasuryRates.csv")
-        #convert to date format
-        treasury$Date <- as.Date(treasury$Date, "%m/%d/%Y")
-        current <- treasury[which.max(treasury$Date),]
+        current <- prasing_treasury()[which.max(parsing_treasury()$Date),]
         return(current)
     })
     
