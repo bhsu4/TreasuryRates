@@ -426,12 +426,12 @@ ui <- fluidPage(
                                             ), tags$br(), tags$br(), hr(), tags$br(),
                                             sliderInput(inputId = "historicalYear",
                                                         label = "Select Years",
-                                                        min = 1990, max = 2020,
-                                                        value = c(1990,2020), sep = ""),
-                                            helpText(HTML("<p style = 'text-align: right'>Last update: 6/30/2020</p>")),
+                                                        min = 1990, max = year(Sys.Date()),
+                                                        value = c(1990, year(Sys.Date())), sep = ""),
+                                            helpText(HTML(paste0("<p style = 'text-align: right'>", "Last update: ", Sys.Date()-1, "</p>"))),
                                             tags$br(), hr(), tags$br(), 
                                             wellPanel( #if want latest date, set value null and updatedateinput
-                                              dateInput(inputId = "historicalDate", "Select Date", value = '06-30-2020', format = "yyyy-mm-dd"),
+                                              dateInput(inputId = "historicalDate", "Select Date", value = Sys.Date()-1, format = "yyyy-mm-dd"),
                                               div(style="display:inline-block; width:160%; text-align: center;", actionButton(inputId = "DateRate", label = "Input to Treasury", icon = icon("plus"),
                                                            style="color: #fff; background-color: #b3b3b3; 
                                                                   border-color: #b3b3b3; padding:5px; font-size:100%;"))
@@ -501,7 +501,11 @@ ui <- fluidPage(
                               The yield reflects the percentage earned (interest rate) on the investment when the government is borrowing
                               the money. The methodology to derive these daily treasury yields are from quasi-cubic hermite spline functions
                               that can be found ", a("here", href = "https://home.treasury.gov/policy-issues/financing-the-government/interest-rate-statistics/treasury-yield-curve-methodology"), 
-                              ".")
+                              ".", HTML("</br></br>"),
+                              "The treasury rates data from the US DOT are parsed from the provided XML format on the site. 
+                               This will allow the data to be read and processed directly into the web application without needing to manually 
+                               add the newest information. The packages, 'XML' and 'RCurl' used will read the content in 
+                               from the URL provided, and parse the XML for the appropriate treasury rates at each duration.")
                          )
                   )
               ), HTML("<br></br>"),
@@ -710,7 +714,6 @@ server <- function(session, input, output) {
         treasury_line$vartitle <- factor(treasury_line$vartitle, 
                                          levels = chosen_duration[order(chosen_duration$months),]$vartitle)
         
-
         #plotly output
         p <- plot_ly(type = 'scatter', mode = 'lines')
         for (i in chosen_duration$vartitle){
@@ -765,7 +768,7 @@ server <- function(session, input, output) {
 #### historical percentile tab #########
     
     curr_point <- reactive({
-        current <- prasing_treasury()[which.max(parsing_treasury()$Date),]
+        current <- parsing_treasury()[which.max(parsing_treasury()$Date),]
         return(current)
     })
     
@@ -1597,7 +1600,6 @@ server <- function(session, input, output) {
         config(displaylogo = FALSE, modeBarButtonsToRemove = list("zoomIn2d", "zoomOut2d", "zoom2d", "autoScale2d", "resetScale2d", "select2d", 
                                                                   "hoverClosestCartesian", "hoverCompareCartesian", "lasso2d", "pan2d"))
 
-      
     })
     
 }
